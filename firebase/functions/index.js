@@ -11,10 +11,6 @@ const superagent = require('superagent')
 const config = {
 	endpoint: 'https://api.drivewealth.net/v1'
 }
-const actionMap = {
-	enterlong: 'B',
-	exitlong: 'S'
-}
 const datetime = new Date().toISOString()
 
 // Helper
@@ -28,8 +24,6 @@ function sendError (response, code, message) {
 function userRequest (next) {
 	return function userRequestMiddleware (request, response) {
 		// Check User ID
-		console.log('query:', request.query)
-		console.log('body:', request.body)
 		if (!request.query.userid) return sendError(response, 404, 'not ok - missing userid')()
 
 		// Fetch User
@@ -73,7 +67,7 @@ exports.version = functions.https.onRequest(function (request, response) {
 	response.send(datetime)
 })
 
-exports.createUser = functions.https.onRequest(function (request, response) {
+exports.saveUser = functions.https.onRequest(function (request, response) {
 	const { username, password } = request.body
 	if (!username || !password) return sendError(response, 500, 'not ok - missing username or password')()
 	store.collection('users')
@@ -82,10 +76,14 @@ exports.createUser = functions.https.onRequest(function (request, response) {
 			password
 		})
 		.then((ref) => response.send(ref.id))
-		.catch(sendError(response, 500, 'not ok - failed to create user'))
+		.catch(sendError(response, 500, 'not ok - failed to save user'))
 })
 
-exports.createSession = functions.https.onRequest(userRequest(function (request, response) {
+exports.saveSession = functions.https.onRequest(userRequest(function (request, response) {
+	Promise.resolve()
+		.then(fetchSession(request, response))
+
+
 	const { username, password } = response.locals.user.data
 	if (!username || !password) return sendError(response, 500, 'not ok - user data invalid')()
 	superagent
@@ -107,52 +105,95 @@ exports.createSession = functions.https.onRequest(userRequest(function (request,
 		.then((result) => result.body)
 		.then((session) => response.locals.user.document.set({ session }, { merge: true }))
 		.catch(sendError(response, 500, 'not ok - session save failed'))
-		.then(() => response.send('ok - user session created'))
+		.then(() => response.send('ok - user session saved'))
 }))
 
-exports.createInstrument = functions.https.onRequest(sessionRequest(function (request, response) {
+exports.saveAccountSummary = functions.https.onRequest(sessionRequest(function (request, response) {
+	const session = response.locals.user.data.session
+	const account = session.accounts[0]
+	superagent
+		.get(`${config.endpoint}/users/${session.userID}/accountSummary/${account.accountID}`)
+		.accept('json')
+		.set('x-mysolomeo-session-key', response.locals.sessionKey)
+		.catch(sendError(response, 500, 'not ok - account summary fetch failed'))
+		.then((result) => result.body)
+		.then((accountSummary) => response.locals.user.document.set({ accountSummary }, { merge: true }))
+		.catch(sendError(response, 500, 'not ok - account summary save failed'))
+		.then(() => response.send('ok - account summary saved'))
+}))
+
+exports.saveAccount = functions.https.onRequest(sessionRequest(function (request, response) {
+	const session = response.locals.user.data.session
+	const account = session.accounts[0]
+	superagent
+		.get(`${config.endpoint}/users/${session.userID}/accounts/${account.accountID}`)
+		.accept('json')
+		.set('x-mysolomeo-session-key', response.locals.sessionKey)
+		.catch(sendError(response, 500, 'not ok - account fetch failed'))
+		.then((result) => result.body)
+		.then((account) => response.locals.user.document.set({ account }, { merge: true }))
+		.catch(sendError(response, 500, 'not ok - account summary save failed'))
+		.then(() => response.send('ok - account summary saved'))
+}))
+
+exports.saveInstrument = functions.https.onRequest(sessionRequest(function (request, response) {
 	superagent
 		.get(`${config.endpoint}/instruments`)
 		.query({ symbols: request.query.symbol })
 		.accept('json')
 		.set('x-mysolomeo-session-key', response.locals.sessionKey)
 		.catch(sendError(response, 500, 'not ok - instrument fetch failed'))
-		.then((result) => {
-			console.log('result:', result.body)
-			return result.body[0]
-		})
+		.then((result) => result.body[0])
 		.then((instrument) => response.locals.user.document.collection('instruments').doc(request.query.symbol).set(instrument))
 		.catch(sendError(response, 500, 'not ok - instrument save failed'))
 		.then(() => response.send('ok'))
 }))
 
-exports.createOrder = functions.https.onRequest(instrumentRequest(function (request, response) {
+exports.saveOrder = functions.https.onRequest(instrumentRequest(function (request, response) {
 	const action = request.query.action
-	const side = actionMap[action] || null
-	if (!side) return sendError(response, 500, 'not ok - type invalid')()
 
-	const session = response.locals.user.data.session
-	const instrument = response.locals.instrument.data
+	// Fetch
+	const user = response.locals.user.data
+	const session = user.session
 	const account = session.accounts[0]
+	const instrument = response.locals.instrument.data
+	const percent = (user.percent || 50) / 100
 
-	rateBid
-	orderQty = (action === 'enterlong') ? account.rtCashAvailForTrading
+	// Prepare Order
+	const order = {
+		instrumentID: instrument.instrumentID,
+		accountID: account.accountID,
+		accountNo: account.accountNo,
+		accountType: account.accountType,
+		userID: session.userID,
+		ordType: '1'
+	}
+	if (action === 'enterlong') {
+		order.side = 'B'
+		// Apply
+		order.amountCash = percent * account.rtCashAvailForTrading
+		if (order.amountCash < 100) {
+			return sendError(response, 400, 'not ok - trade size is too small')()
+		}
+	}
+	else if (action === 'exitlong') {
+		order.side = 'B'
+		// Apply
+		const active = user.accountSummary.equity.equityPositions.find((item) => item.instrumentID === order.instrumentID)
+		if (active.side === 'B') {
+			order.orderQty = active.availableForTradingQty
+		}
+	}
+	else {
+		return sendError(response, 400, 'not ok - invalid action')()
+	}
 
 	superagent
-			.post(`${config.endpoint}/orders/`)
-			.type('json').accept('json')
-			.set('x-mysolomeo-session-key', response.locals.sessionKey)
-			.send({
-				instrumentID: instrument.instrumentID,
-				accountID: account.accountID,
-				accountNo: account.accountNo,
-				accountType: account.accountType,
-				userID: session.userID,
-				ordType: '1',
-				side,
-				orderQty: 1
-			})
-			.then((result) => result.body)
-			.catch(sendError(response, 500, 'not ok - order creation failed'))
-			.then(() => response.send('ok'))
+		.post(`${config.endpoint}/orders/`)
+		.type('json').accept('json')
+		.set('x-mysolomeo-session-key', response.locals.sessionKey)
+		.send(order)
+		.then((result) => result.body)
+		.catch(sendError(response, 500, 'not ok - order creation failed'))
+		.then(() => response.send('ok'))
 }))
