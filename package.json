@@ -1,0 +1,13 @@
+{
+  "name": "automated-trading",
+  "version": "1.0.0",
+  "author": "Benjamin Lupton <b@lupton.cc>",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "8"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^4.8.0"
+  }
+}

@@ -1,0 +1,30 @@
+study(title="bal-renko", shorttitle="renko", overlay=false)
+
+renkoSeries = renko(tickerid, "close", "ATR", 14)
+renkoResolution = "5"
+
+renkoOpen = security(renkoSeries, renkoResolution, open)
+renkoClose = security(renkoSeries, renkoResolution, close)
+
+up = renkoOpen < renkoClose
+
+renkoColor = up ? green : red
+plotcandle(renkoOpen, max(renkoClose, renkoOpen), min(renkoClose, renkoOpen), renkoClose, title = "renko", color = renkoColor)
+
+s = barssince(change(renkoClose) != 0) == 0
+plotshape(s, title='s', style=shape.triangleup, location=location.abovebar, size=size.normal, color=red, editable=false)
+
+// c = valuewhen(renkoClose > renkoOpen, renkoClose, 1) > valuewhen(renkoClose > renkoOpen, renkoClose, 2)
+change = change(renkoClose)
+a = valuewhen(change, renkoClose, 1)
+b = valuewhen(change, renkoClose, 2)
+c = valuewhen(change, renkoClose, 3)
+d = valuewhen(change, renkoClose, 4)
+z = change and a > b and b > c and c < d
+// plotshape(z, title='2up', style=shape.triangleup, location=location.abovebar, size=size.normal, color=green, editable=false)
+
+y = change and a < b and b < c and c > d
+// plotshape(y, title='2down', style=shape.triangleup, location=location.abovebar, size=size.normal, color=red, editable=false)
+
+x = (z ? 1 : (y ? -1 : 0))
+plotarrow(x, title='buysell')
