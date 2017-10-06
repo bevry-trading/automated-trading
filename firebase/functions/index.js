@@ -6,6 +6,20 @@ const admin = require('firebase-admin')
 admin.initializeApp(functions.config().firebase)
 const store = admin.firestore()
 
+class NError extends Error {
+	constructor (message, parent, details) {
+		super(message)
+		this.details = details
+		this.parent = parent
+	}
+	get stack () {
+		if (this.parent) {
+			return super.stack + '\nCaused By: ' + this.parent.stack
+		}
+		return super.stack
+	}
+}
+
 // Configuration
 const superagent = require('superagent')
 const config = {
@@ -14,84 +28,51 @@ const config = {
 const datetime = new Date().toISOString()
 
 // Helper
-function sendError (response, code, message) {
+function sendError (response, message) {
 	return function (err) {
-		if (err) console.error(err)
-		response.status(code).send(message)
-		return err
+		if (err) {
+			console.error(err)
+			if (!message) message = err.message
+		}
+		if (!message) message = 'an unknown error occured'
+		response.status(err.statusCode || 500).send(message)
 	}
 }
-function userRequest (next) {
-	return function userRequestMiddleware (request, response) {
-		// Check User ID
-		if (!request.query.userid) return sendError(response, 404, 'not ok - missing userid')()
 
-		// Fetch User
-		const document = store.doc(`users/${request.query.userid}`)
-		document.get()
-			.catch(sendError(response, 404, 'not ok - user read failed'))
-			.then((snapshot) => {
-				const data = snapshot.data()
-				response.locals.user = { document, data }
-				next(request, response)
-			})
-	}
-}
-function sessionRequest (next) {
-	return userRequest(function sessionRequestMiddleware (request, response) {
-		// Check Session
-		if (!response.locals.user.data.session.sessionKey) return sendError(response, 404, 'not ok - missing session')()
-		response.locals.sessionKey = response.locals.user.data.session.sessionKey
-		return next(request, response)
-	})
-}
-function instrumentRequest (next) {
-	return sessionRequest(function instrumentRequestMiddleware (request, response) {
-		// Check Symbol
-		if (!request.query.symbol) return sendError(response, 404, 'not ok - missing symbol')()
+function getUser (userID) {
+	// Check User ID
+	if (!userID) return Promise.reject(new NError('get user failed because missing userid'))
 
-		// Fetch Instrument
-		const document = store.doc(`users/${request.query.userid}/instruments/${request.query.symbol}`)
-		document.get()
-			.catch(sendError(response, 404, 'not ok - instrument read failed'))
-			.then((snapshot) => {
-				const data = snapshot.data()
-				response.locals.instrument = { document, data }
-				next(request, response)
-			})
-	})
+	// Fetch User
+	const document = store.doc(`users/${userID}`)
+	return document.get()
+		.then((snapshot) => {
+			const data = snapshot.data()
+			const user = { document, data }
+			return user
+		})
+		.catch((err) => Promise.reject(new NError('get user failed because the read failed', err)))
 }
 
-// Version
-exports.version = functions.https.onRequest(function (request, response) {
-	response.send(datetime)
-})
-
-exports.saveUser = functions.https.onRequest(function (request, response) {
-	const { username, password } = request.body
-	if (!username || !password) return sendError(response, 500, 'not ok - missing username or password')()
-	store.collection('users')
+function createUser (username, password) {
+	if (!username || !password) return Promise.reject(new NError('create user failed because missing username/password'))
+	return store.collection('users')
 		.add({
 			username,
 			password
 		})
-		.then((ref) => response.send(ref.id))
-		.catch(sendError(response, 500, 'not ok - failed to save user'))
-})
+		.catch((err) => Promise.reject(new NError('create user failed because the save failed', err)))
+		.then((ref) => ref.id)
+}
 
-exports.saveSession = functions.https.onRequest(userRequest(function (request, response) {
-	Promise.resolve()
-		.then(fetchSession(request, response))
-
-
-	const { username, password } = response.locals.user.data
-	if (!username || !password) return sendError(response, 500, 'not ok - user data invalid')()
-	superagent
+function createSession (user) {
+	const { username, password } = user.data
+	if (!username || !password) return Promise.reject(new NError('create session failed because invalid user data'))
+	return superagent
 		.post(`${config.endpoint}/userSessions`)
 		.type('json').accept('json')
 		.send({
-			username: response.locals.user.data.username,
-			password: response.locals.user.data.password,
+			username, password,
 			accountType: 2,
 			appTypeID: 2000,
 			appVersion: 0.1,
@@ -101,42 +82,86 @@ exports.saveSession = functions.https.onRequest(userRequest(function (request, r
 			scrRes: '1920x1080',
 			ipAddress: '1.1.1.1' // request.headers['x-forwarded-for']
 		})
-		.catch(sendError(response, 500, 'not ok - session creation failed'))
-		.then((result) => result.body)
-		.then((session) => response.locals.user.document.set({ session }, { merge: true }))
-		.catch(sendError(response, 500, 'not ok - session save failed'))
-		.then(() => response.send('ok - user session saved'))
-}))
+		.catch((err) => Promise.reject(new NError('create session failed because the request failed', err)))
+		.then((result) => {
+			const session = result.body
+			return user.document.set({ session }, { merge: true })
+				.then(session)
+				.catch((err) => Promise.reject(new NError('create session failed because the save failed', err)))
+		})
+}
 
-exports.saveAccountSummary = functions.https.onRequest(sessionRequest(function (request, response) {
-	const session = response.locals.user.data.session
+function fetchAccountSummary (user) {
+	const session = user.data.session
 	const account = session.accounts[0]
-	superagent
+	const sessionKey = user.data.session.sessionKey
+	return superagent
 		.get(`${config.endpoint}/users/${session.userID}/accountSummary/${account.accountID}`)
 		.accept('json')
-		.set('x-mysolomeo-session-key', response.locals.sessionKey)
-		.catch(sendError(response, 500, 'not ok - account summary fetch failed'))
+		.set('x-mysolomeo-session-key', sessionKey)
+		.catch((err) => Promise.reject(new NError('fetch account summary failed because the request failed', err)))
 		.then((result) => result.body)
-		.then((accountSummary) => response.locals.user.document.set({ accountSummary }, { merge: true }))
-		.catch(sendError(response, 500, 'not ok - account summary save failed'))
-		.then(() => response.send('ok - account summary saved'))
-}))
+}
 
-exports.saveAccount = functions.https.onRequest(sessionRequest(function (request, response) {
-	const session = response.locals.user.data.session
+function fetchAccount (user) {
+	const session = user.data.session
 	const account = session.accounts[0]
-	superagent
+	const sessionKey = user.data.session.sessionKey
+	return superagent
 		.get(`${config.endpoint}/users/${session.userID}/accounts/${account.accountID}`)
 		.accept('json')
-		.set('x-mysolomeo-session-key', response.locals.sessionKey)
-		.catch(sendError(response, 500, 'not ok - account fetch failed'))
+		.set('x-mysolomeo-session-key', sessionKey)
+		.catch((err) => Promise.reject(new NError('fetch account failed because the request failed', err)))
 		.then((result) => result.body)
-		.then((account) => response.locals.user.document.set({ account }, { merge: true }))
-		.catch(sendError(response, 500, 'not ok - account summary save failed'))
-		.then(() => response.send('ok - account summary saved'))
-}))
+}
 
-exports.saveInstrument = functions.https.onRequest(sessionRequest(function (request, response) {
+function fetchInstrument (user, symbol) {
+	const sessionKey = user.data.session.sessionKey
+	return superagent
+		.get(`${config.endpoint}/instruments`)
+		.query({ symbols: symbol })
+		.accept('json')
+		.set('x-mysolomeo-session-key', sessionKey)
+		.catch((err) => Promise.reject(new NError('fetch instrument failed because the request failed', err)))
+		.then((result) => result.body[0])
+}
+
+/*
+function saveAccountSummary (user) {
+	return fetchAccountSummary(user)
+		.then((accountSummary) => user.document.set({ accountSummary }, { merge: true }).then(() => accountSummary))
+		.catch((err) => Promise.reject(new NError('save accoumt summary failed', err)))
+}
+
+function saveAccount (user) {
+	return fetchAccountSummary(user)
+		.then((account) => user.document.set({ account }, { merge: true }).then(() => account))
+		.catch((err) => Promise.reject(new NError('save account failed', err)))
+}
+
+function saveInstrument (user) {
+	return fetchAccountSummary(user)
+		.then((instrument) => user.document.collection('instruments').doc(request.query.symbol).set(instrument).then(() => instrument))
+		.catch((err) => Promise.reject(new NError('save account failed', err)))
+}
+*/
+
+/*
+function getInstrument (userID, symbol) {
+	// Check Symbol
+	if (!symbol) return Promise.reject(new NError('missing symbol'))
+
+	// Fetch Instrument
+	const document = store.doc(`users/${userID}/instruments/${symbol}`)
+	return document.get()
+		.catch((err) => Promise.reject(new NError('instrument read failed', err)))
+		.then((snapshot) => {
+			const data = snapshot.data()
+			const instrument = { document, data }
+			return instrument
+		})
+}
+
 	superagent
 		.get(`${config.endpoint}/instruments`)
 		.query({ symbols: request.query.symbol })
@@ -147,53 +172,123 @@ exports.saveInstrument = functions.https.onRequest(sessionRequest(function (requ
 		.then((instrument) => response.locals.user.document.collection('instruments').doc(request.query.symbol).set(instrument))
 		.catch(sendError(response, 500, 'not ok - instrument save failed'))
 		.then(() => response.send('ok'))
-}))
+*/
 
-exports.saveOrder = functions.https.onRequest(instrumentRequest(function (request, response) {
-	const action = request.query.action
 
-	// Fetch
-	const user = response.locals.user.data
-	const session = user.session
-	const account = session.accounts[0]
-	const instrument = response.locals.instrument.data
-	const percent = (user.percent || 50) / 100
+function validateSession (user) {
+	// Check Session
+	const sessionKey = user.data.session && user.data.session.sessionKey
+	if (!sessionKey) return Promise.reject(new NError('missing session'))
+	return Promise.resolve(user)
+}
 
-	// Prepare Order
-	const order = {
-		instrumentID: instrument.instrumentID,
-		accountID: account.accountID,
-		accountNo: account.accountNo,
-		accountType: account.accountType,
-		userID: session.userID,
-		ordType: '1'
-	}
-	if (action === 'enterlong') {
-		order.side = 'B'
-		// Apply
-		order.amountCash = percent * account.rtCashAvailForTrading
-		if (order.amountCash < 100) {
-			return sendError(response, 400, 'not ok - trade size is too small')()
-		}
-	}
-	else if (action === 'exitlong') {
-		order.side = 'B'
-		// Apply
-		const active = user.accountSummary.equity.equityPositions.find((item) => item.instrumentID === order.instrumentID)
-		if (active.side === 'B') {
-			order.orderQty = active.availableForTradingQty
-		}
-	}
-	else {
-		return sendError(response, 400, 'not ok - invalid action')()
-	}
+// Version
+exports.version = functions.https.onRequest(function (request, response) {
+	response.send(datetime)
+})
 
-	superagent
-		.post(`${config.endpoint}/orders/`)
-		.type('json').accept('json')
-		.set('x-mysolomeo-session-key', response.locals.sessionKey)
-		.send(order)
-		.then((result) => result.body)
-		.catch(sendError(response, 500, 'not ok - order creation failed'))
-		.then(() => response.send('ok'))
-}))
+exports.saveUser = functions.https.onRequest(function (request, response) {
+	const { username, password } = request.body
+	return createUser(username, password)
+		.then((userID) => response.send(userID))
+		.catch(sendError(response))
+})
+
+exports.saveSession = functions.https.onRequest(function (request, response) {
+	return getUser(request.query.userid)
+		.then(createSession)
+		.then(() => response.send('ok - saved user session'))
+		.catch(sendError(response))
+})
+
+exports.fetchAccountSummary = functions.https.onRequest(function (request, response) {
+	return getUser(request.query.userid)
+		.then(validateSession)
+		.then(fetchAccountSummary)
+		.then((accountSummary) => response.send(accountSummary))
+		.catch(sendError(response))
+})
+
+exports.fetchAccount = functions.https.onRequest(function (request, response) {
+	return getUser(request.query.userid)
+		.then(validateSession)
+		.then(fetchAccount)
+		.then((account) => response.send(account))
+		.catch(sendError(response))
+})
+
+exports.fetchInstrument = functions.https.onRequest(function (request, response) {
+	return getUser(request.query.userid)
+		.then(validateSession)
+		.then((user) => fetchInstrument(user, request.query.symbol))
+		.then((instrument) => response.send(instrument))
+		.catch(sendError(response))
+})
+
+exports.saveOrder = functions.https.onRequest(function (request, response) {
+	const state = {}
+	return getUser(request.query.userid)
+		.then(validateSession)
+		.then((user) => {
+			state.user = user
+			return Promise.all([
+				fetchInstrument(user, request.query.symbol).then((instrument) => {
+					state.instrument = instrument
+				}),
+				fetchAccountSummary(user).then((accountSummary) => {
+					state.accountSummary = accountSummary
+				})
+			])
+		})
+		.then(() => {
+			const action = request.query.action
+
+			// Fetch
+			const { user, instrument, accountSummary } = state
+			const session = user.data.session
+			const sessionKey = user.datasession.sessionKey
+			const account = session.accounts[0]
+			const percent = (user.data.percent || 50) / 100
+			const available = accountSummary.cash.cashAvailableForTrade
+
+			// Prepare Order
+			const order = {
+				instrumentID: instrument.instrumentID,
+				accountID: account.accountID,
+				accountNo: account.accountNo,
+				accountType: account.accountType,
+				userID: session.userID,
+				ordType: '1'
+			}
+			if (action === 'enterlong') {
+				order.side = 'B'
+				order.amountCash = percent * available
+				if (order.amountCash < 100) {
+					return Promise.reject(new NError('create order failed because trade size is too small', { order, available, percent }))
+				}
+			}
+			else if (action === 'exitlong') {
+				order.side = 'S'
+				const positions = accountSummary.equity.equityPositions
+				const active = positions.find((item) => item.instrumentID === order.instrumentID)
+				if (!active) {
+					return Promise.reject(new NError('create order failed because there is no position to sell', { positions }))
+				}
+				else if (active.side === 'B') {
+					order.orderQty = active.availableForTradingQty
+				}
+			}
+			else {
+				return Promise.reject(new NError('create order failed because action was invalid', { action }))
+			}
+
+			return superagent
+				.post(`${config.endpoint}/orders/`)
+				.type('json').accept('json')
+				.set('x-mysolomeo-session-key', sessionKey)
+				.send(order)
+				.then((result) => result.body)
+				.catch((err) => Promise.reject(new NError('create order failed because the request failed', err)))
+				.then((result) => response.send(result))
+		})
+})
