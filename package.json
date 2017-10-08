@@ -9,5 +9,8 @@
   "dependencies": {},
   "devDependencies": {
     "eslint": "^4.8.0"
+  },
+  "scripts": {
+    "deploy": "cd ./firebase && firebase deploy --only functions && cd ../"
   }
 }
