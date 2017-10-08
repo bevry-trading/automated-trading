@@ -1,3 +1,4 @@
+/* eslint camelcase:0 */
 'use strict'
 
 // Firebase
@@ -9,80 +10,118 @@ const store = admin.firestore()
 // Configuration
 const datetime = new Date().toISOString()
 const { sendError } = require('./util')
-const config = { store, endpoint: 'https://api.drivewealth.net/v1' }
 
-// DriveWealth Client
-const DriveWealth = require('./drivewealth')
-const getUser = DriveWealth.getUser.bind(config)
-const createUser = DriveWealth.createUser.bind(config)
-const createSession = DriveWealth.createSession.bind(config)
-const fetchAccountSummary = DriveWealth.fetchAccountSummary.bind(config)
-const fetchAccount = DriveWealth.fetchAccount.bind(config)
-const fetchInstrument = DriveWealth.fetchInstrument.bind(config)
-const validateSession = DriveWealth.validateSession.bind(config)
-const createOrder = DriveWealth.createOrder.bind(config)
+// Client
+const bitfinex = require('./bitfinex')
+const drivewealth = require('./drivewealth')
 
-// Version
+
+// ====================================
+// Routes
+
 exports.version = functions.https.onRequest(function (request, response) {
 	response.send(datetime)
 })
 
-exports.createUser = functions.https.onRequest(function (request, response) {
-	const { username, password } = request.body
-	return createUser(username, password)
-		.then((userID) => response.send(userID))
+
+// ------------------------------------
+// Routes: Bitfinex
+
+exports.bitfinex_createUser = functions.https.onRequest(function (request, response) {
+	const { key, secret } = request.body
+	return bitfinex.createUser(store, key, secret)
+		.then((userid) => response.send({ userid }))
 		.catch(sendError(response))
 })
 
-exports.createSession = functions.https.onRequest(function (request, response) {
-	return getUser(request.query.userid)
-		.then(createSession)
+exports.bitfinex_fetchBalances = functions.https.onRequest(function (request, response) {
+	const { userid } = request.query
+	return bitfinex.getUser(store, userid)
+		.then(bitfinex.fetchBalances)
+		.then((balances) => response.send({ balances }))
+		.catch(sendError(response))
+})
+
+exports.bitfinex_fetchBalance = functions.https.onRequest(function (request, response) {
+	const { userid, symbol } = request.query
+	return bitfinex.getUser(store, userid)
+		.then((user) => bitfinex.fetchBalance(user, symbol))
+		.then((balance) => response.send({ balance }))
+		.catch(sendError(response))
+})
+
+exports.bitfinex_createOrder = functions.https.onRequest(function (request, response) {
+	const { userid, from, to, action } = request.query
+	return bitfinex.getUser(store, userid)
+		.then((user) => bitfinex.createOrder({ user, from, to, action }))
+		.then((order) => response.send({ order }))
+		.catch(sendError(response))
+})
+
+
+// ------------------------------------
+// Routes: DriveWealth
+
+exports.drivewealth_createUser = functions.https.onRequest(function (request, response) {
+	const { username, password } = request.body
+	return drivewealth.createUser(store, username, password)
+		.then((userid) => response.send({ userid }))
+		.catch(sendError(response))
+})
+
+exports.drivewealth_createSession = functions.https.onRequest(function (request, response) {
+	const { userid } = request.query
+	return drivewealth.getUser(store, userid)
+		.then(drivewealth.createSession)
 		.then(() => response.send('ok - saved user session'))
 		.catch(sendError(response))
 })
 
-exports.getAccountSummary = functions.https.onRequest(function (request, response) {
-	return getUser(request.query.userid)
-		.then(validateSession)
-		.then(fetchAccountSummary)
-		.then((accountSummary) => response.send(accountSummary))
+exports.drivewealth_getAccountSummary = functions.https.onRequest(function (request, response) {
+	const { userid } = request.query
+	return drivewealth.getUser(store, userid)
+		.then(drivewealth.validateSession)
+		.then(drivewealth.fetchAccountSummary)
+		.then((accountSummary) => response.send({ accountSummary }))
 		.catch(sendError(response))
 })
 
-exports.getAccount = functions.https.onRequest(function (request, response) {
-	return getUser(request.query.userid)
-		.then(validateSession)
-		.then(fetchAccount)
-		.then((account) => response.send(account))
+exports.drivewealth_getAccount = functions.https.onRequest(function (request, response) {
+	const { userid } = request.query
+	return drivewealth.getUser(store, userid)
+		.then(drivewealth.validateSession)
+		.then(drivewealth.fetchAccount)
+		.then((account) => response.send({ account }))
 		.catch(sendError(response))
 })
 
-exports.getInstrument = functions.https.onRequest(function (request, response) {
-	return getUser(request.query.userid)
-		.then(validateSession)
-		.then((user) => fetchInstrument(user, request.query.symbol))
-		.then((instrument) => response.send(instrument))
+exports.drivewealth_getInstrument = functions.https.onRequest(function (request, response) {
+	const { userid, symbol } = request.query
+	return drivewealth.getUser(store, userid)
+		.then(drivewealth.validateSession)
+		.then((user) => drivewealth.fetchInstrument(user, symbol))
+		.then((instrument) => response.send({ instrument }))
 		.catch(sendError(response))
 })
 
-exports.createOrder = functions.https.onRequest(function (request, response) {
-	return getUser(request.query.userid)
-		.then(validateSession)
+exports.drivewealth_createOrder = functions.https.onRequest(function (request, response) {
+	const { userid, action } = request.query
+	return drivewealth.getUser(store, userid)
+		.then(drivewealth.validateSession)
 		.then((user) => {
-			const state = {
-				action: request.query.action
-			}
+			const state = { action }
 			state.user = user
 			return Promise.all([
-				fetchInstrument(user, request.query.symbol).then((instrument) => {
+				drivewealth.fetchInstrument(user, request.query.symbol).then((instrument) => {
 					state.instrument = instrument
 				}),
-				fetchAccountSummary(user).then((accountSummary) => {
+				drivewealth.fetchAccountSummary(user).then((accountSummary) => {
 					state.accountSummary = accountSummary
 				})
 			])
 		})
-		.then(createOrder)
-		.then((result) => response.send(result))
+		.then(drivewealth.createOrder)
+		.then((order) => response.send({ order }))
 		.catch(sendError(response))
 })
+

@@ -2,15 +2,14 @@
 
 const { NError } = require('./util')
 const superagent = require('superagent')
+const endpoint = 'https://api.drivewealth.net/v1'
 
-function getUser (userID) {
-	const config = this
-
+function getUser (store, userID) {
 	// Check User ID
 	if (!userID) return Promise.reject(new NError('get user failed because missing userid'))
 
 	// Fetch User
-	const document = config.store.doc(`users/${userID}`)
+	const document = store.doc(`users/${userID}`)
 	return document.get()
 		.then((snapshot) => {
 			const data = snapshot.data()
@@ -20,24 +19,19 @@ function getUser (userID) {
 		.catch((err) => Promise.reject(new NError('get user failed because the read failed', err)))
 }
 
-function createUser (username, password) {
-	const config = this
+function createUser (store, username, password) {
 	if (!username || !password) return Promise.reject(new NError('create user failed because missing username/password'))
-	return config.store.collection('users')
-		.add({
-			username,
-			password
-		})
+	return store.collection('users')
+		.add({ username, password, service: 'drivewealth' })
 		.catch((err) => Promise.reject(new NError('create user failed because the save failed', err)))
 		.then((ref) => ref.id)
 }
 
 function createSession (user) {
-	const config = this
 	const { username, password } = user.data
 	if (!username || !password) return Promise.reject(new NError('create session failed because invalid user data'))
 	return superagent
-		.post(`${config.endpoint}/userSessions`)
+		.post(`${endpoint}/userSessions`)
 		.type('json').accept('json')
 		.send({
 			username, password,
@@ -60,12 +54,11 @@ function createSession (user) {
 }
 
 function fetchAccountSummary (user) {
-	const config = this
 	const session = user.data.session
 	const account = session.accounts[0]
 	const sessionKey = user.data.session.sessionKey
 	return superagent
-		.get(`${config.endpoint}/users/${session.userID}/accountSummary/${account.accountID}`)
+		.get(`${endpoint}/users/${session.userID}/accountSummary/${account.accountID}`)
 		.accept('json')
 		.set('x-mysolomeo-session-key', sessionKey)
 		.catch((err) => Promise.reject(new NError('fetch account summary failed because the request failed', err)))
@@ -73,12 +66,11 @@ function fetchAccountSummary (user) {
 }
 
 function fetchAccount (user) {
-	const config = this
 	const session = user.data.session
 	const account = session.accounts[0]
 	const sessionKey = user.data.session.sessionKey
 	return superagent
-		.get(`${config.endpoint}/users/${session.userID}/accounts/${account.accountID}`)
+		.get(`${endpoint}/users/${session.userID}/accounts/${account.accountID}`)
 		.accept('json')
 		.set('x-mysolomeo-session-key', sessionKey)
 		.catch((err) => Promise.reject(new NError('fetch account failed because the request failed', err)))
@@ -86,10 +78,9 @@ function fetchAccount (user) {
 }
 
 function fetchInstrument (user, symbol) {
-	const config = this
 	const sessionKey = user.data.session.sessionKey
 	return superagent
-		.get(`${config.endpoint}/instruments`)
+		.get(`${endpoint}/instruments`)
 		.query({ symbols: symbol })
 		.accept('json')
 		.set('x-mysolomeo-session-key', sessionKey)
@@ -118,7 +109,7 @@ function saveInstrument (user) {
 */
 
 /*
-function getInstrument (userID, symbol) {
+function getInstrument (store, userID, symbol) {
 	// Check Symbol
 	if (!symbol) return Promise.reject(new NError('missing symbol'))
 
@@ -134,7 +125,7 @@ function getInstrument (userID, symbol) {
 }
 
 	superagent
-		.get(`${config.endpoint}/instruments`)
+		.get(`${endpoint}/instruments`)
 		.query({ symbols: request.query.symbol })
 		.accept('json')
 		.set('x-mysolomeo-session-key', response.locals.sessionKey)
@@ -153,9 +144,8 @@ function validateSession (user) {
 	return Promise.resolve(user)
 }
 
-function createOrder ({ action, user, instrument, accountSummary }) {
+function createOrder ({ user, action, instrument, accountSummary }) {
 	// Fetch
-	const config = this
 	const session = user.data.session
 	const sessionKey = user.data.session.sessionKey
 	const account = session.accounts[0]
@@ -171,14 +161,14 @@ function createOrder ({ action, user, instrument, accountSummary }) {
 		userID: session.userID,
 		ordType: '1'
 	}
-	if (action === 'buy' || action === 'enterlong') {
+	if (action === 'buy') {
 		order.side = 'B'
 		order.amountCash = percent * available
 		if (order.amountCash < 100) {
 			return Promise.reject(new NError('create order failed because trade size is too small', { order, available, percent }))
 		}
 	}
-	else if (action === 'sell' || action === 'exitlong') {
+	else if (action === 'sell') {
 		order.side = 'S'
 		const positions = accountSummary.equity.equityPositions
 		const active = positions.find((item) => item.instrumentID === order.instrumentID)
@@ -194,7 +184,7 @@ function createOrder ({ action, user, instrument, accountSummary }) {
 	}
 
 	return superagent
-		.post(`${config.endpoint}/orders/`)
+		.post(`${endpoint}/orders/`)
 		.type('json').accept('json')
 		.set('x-mysolomeo-session-key', sessionKey)
 		.send(order)
