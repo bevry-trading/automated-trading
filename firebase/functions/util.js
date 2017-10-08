@@ -25,4 +25,24 @@ function sendError (response, message) {
 	}
 }
 
-module.exports = { NError, sendError }
+function getService (store, userid, serviceid) {
+	if (!userid || !serviceid) return Promise.reject(new NError('get service failed because invalid data'))
+	const document = store.doc(`users/${userid}/services/${serviceid}`)
+	return document.get()
+		.then((snapshot) => {
+			const data = snapshot.data()
+			const service = { document, data }
+			return service
+		})
+		.catch((err) => Promise.reject(new NError('get service failed because the read failed', err)))
+}
+
+function createUser (store, email) {
+	if (!email) return Promise.reject(new NError('create user failed because invalid email'))
+	return store.collection('users')
+		.add({ email })
+		.catch((err) => Promise.reject(new NError('create user failed because the save failed', err)))
+		.then((ref) => ref.id)
+}
+
+module.exports = { NError, sendError, getService, createUser }

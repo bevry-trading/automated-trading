@@ -29,31 +29,16 @@ function request (path, user, params) {
 	})
 }
 
-function getUser (store, userid) {
-	// Check User ID
-	if (!userid) return Promise.reject(new NError('get user failed because missing userid'))
-
-	// Fetch User
-	const document = store.doc(`users/${userid}`)
-	return document.get()
-		.then((snapshot) => {
-			const data = snapshot.data()
-			const user = { document, data }
-			return user
-		})
-		.catch((err) => Promise.reject(new NError('get user failed because the read failed', err)))
-}
-
-function createUser (store, key, secret) {
-	if (!key || !secret) return Promise.reject(new NError('create user failed because missing key/secret'))
-	return store.collection('users')
+function createService (store, userid, key, secret) {
+	if (!key || !secret) return Promise.reject(new NError('create service failed because missing key/secret'))
+	return store.collection(`users/${userid}/services`)
 		.add({ key, secret, service: 'bitfinex' })
-		.catch((err) => Promise.reject(new NError('create user failed because the save failed', err)))
+		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }
 
-function fetchBalances (user) {
-	return request('balances', user, {})
+function fetchBalances (service) {
+	return request('balances', service, {})
 		.catch((err) => Promise.reject(new NError('fetch balances failed because the request failed', err)))
 
 	/*
@@ -91,15 +76,15 @@ function fetchBalances (user) {
 	*/
 }
 
-function fetchBalance (user, symbol) {
+function fetchBalance (service, symbol) {
 	if (!symbol) return Promise.reject(new Error('missing symbol'))
-	return fetchBalances(user).then((results) => results.reduce((sum, value) => sum + (value.type === 'exchange' && value.currency === symbol && value.available), 0))
+	return fetchBalances(service).then((results) => results.reduce((sum, value) => sum + (value.type === 'exchange' && value.currency === symbol && value.available), 0))
 }
 
 // https://bitfinex.readme.io/v1/reference#rest-auth-new-order
-function createOrder ({ user, from, to, action }) {
-	return fetchBalance(user, from)
-		.then((balance) => request('order/new', user, {
+function createOrder (service, action, from, to) {
+	return fetchBalance(service, from)
+		.then((balance) => request('order/new', service, {
 			symbol: from + to,
 			amount: balance,
 			price: Math.random(),
@@ -109,4 +94,4 @@ function createOrder ({ user, from, to, action }) {
 		.catch((err) => Promise.reject(new NError('create order failed because the request failed', err)))
 }
 
-module.exports = { getUser, createUser, fetchBalances, fetchBalance, createOrder }
+module.exports = { createService, fetchBalances, fetchBalance, createOrder }

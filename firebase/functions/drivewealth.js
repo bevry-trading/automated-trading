@@ -4,32 +4,17 @@ const { NError } = require('./util')
 const superagent = require('superagent')
 const endpoint = 'https://api.drivewealth.net/v1'
 
-function getUser (store, userID) {
-	// Check User ID
-	if (!userID) return Promise.reject(new NError('get user failed because missing userid'))
-
-	// Fetch User
-	const document = store.doc(`users/${userID}`)
-	return document.get()
-		.then((snapshot) => {
-			const data = snapshot.data()
-			const user = { document, data }
-			return user
-		})
-		.catch((err) => Promise.reject(new NError('get user failed because the read failed', err)))
-}
-
-function createUser (store, username, password) {
-	if (!username || !password) return Promise.reject(new NError('create user failed because missing username/password'))
-	return store.collection('users')
+function createService (store, userid, username, password) {
+	if (!username || !password) return Promise.reject(new NError('create service failed because missing username/password'))
+	return store.collection(`users/${userid}/services`)
 		.add({ username, password, service: 'drivewealth' })
-		.catch((err) => Promise.reject(new NError('create user failed because the save failed', err)))
+		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }
 
-function createSession (user) {
-	const { username, password } = user.data
-	if (!username || !password) return Promise.reject(new NError('create session failed because invalid user data'))
+function createSession (service) {
+	const { username, password } = service.data
+	if (!username || !password) return Promise.reject(new NError('create session failed because invalid data'))
 	return superagent
 		.post(`${endpoint}/userSessions`)
 		.type('json').accept('json')
@@ -42,21 +27,21 @@ function createSession (user) {
 			osType: 'node',
 			osVersion: process.version,
 			scrRes: '1920x1080',
-			ipAddress: '1.1.1.1' // request.headers['x-forwarded-for']
+			ipAddress: '1.1.1.1'
 		})
 		.catch((err) => Promise.reject(new NError('create session failed because the request failed', err)))
 		.then((result) => {
 			const session = result.body
-			return user.document.set({ session }, { merge: true })
+			return service.document.set({ session }, { merge: true })
 				.then(session)
 				.catch((err) => Promise.reject(new NError('create session failed because the save failed', err)))
 		})
 }
 
-function fetchAccountSummary (user) {
-	const session = user.data.session
+function fetchAccountSummary (service) {
+	const session = service.data.session
 	const account = session.accounts[0]
-	const sessionKey = user.data.session.sessionKey
+	const sessionKey = service.data.session.sessionKey
 	return superagent
 		.get(`${endpoint}/users/${session.userID}/accountSummary/${account.accountID}`)
 		.accept('json')
@@ -65,10 +50,10 @@ function fetchAccountSummary (user) {
 		.then((result) => result.body)
 }
 
-function fetchAccount (user) {
-	const session = user.data.session
+function fetchAccount (service) {
+	const session = service.data.session
 	const account = session.accounts[0]
-	const sessionKey = user.data.session.sessionKey
+	const sessionKey = service.data.session.sessionKey
 	return superagent
 		.get(`${endpoint}/users/${session.userID}/accounts/${account.accountID}`)
 		.accept('json')
@@ -77,8 +62,8 @@ function fetchAccount (user) {
 		.then((result) => result.body)
 }
 
-function fetchInstrument (user, symbol) {
-	const sessionKey = user.data.session.sessionKey
+function fetchInstrument (service, symbol) {
+	const sessionKey = service.data.session.sessionKey
 	return superagent
 		.get(`${endpoint}/instruments`)
 		.query({ symbols: symbol })
@@ -89,32 +74,30 @@ function fetchInstrument (user, symbol) {
 }
 
 /*
-function saveAccountSummary (user) {
-	return fetchAccountSummary(user)
-		.then((accountSummary) => user.document.set({ accountSummary }, { merge: true }).then(() => accountSummary))
+function saveAccountSummary (service) {
+	return fetchAccountSummary(service)
+		.then((accountSummary) => service.document.set({ accountSummary }, { merge: true }).then(() => accountSummary))
 		.catch((err) => Promise.reject(new NError('save accoumt summary failed', err)))
 }
 
-function saveAccount (user) {
-	return fetchAccountSummary(user)
-		.then((account) => user.document.set({ account }, { merge: true }).then(() => account))
+function saveAccount (service) {
+	return fetchAccountSummary(service)
+		.then((account) => service.document.set({ account }, { merge: true }).then(() => account))
 		.catch((err) => Promise.reject(new NError('save account failed', err)))
 }
 
-function saveInstrument (user) {
-	return fetchAccountSummary(user)
-		.then((instrument) => user.document.collection('instruments').doc(request.query.symbol).set(instrument).then(() => instrument))
+function saveInstrument (service) {
+	return fetchAccountSummary(service)
+		.then((instrument) => service.document.collection('instruments').doc(request.query.symbol).set(instrument).then(() => instrument))
 		.catch((err) => Promise.reject(new NError('save account failed', err)))
 }
-*/
 
-/*
-function getInstrument (store, userID, symbol) {
+function getInstrument (store, service, symbol) {
 	// Check Symbol
 	if (!symbol) return Promise.reject(new NError('missing symbol'))
 
 	// Fetch Instrument
-	const document = store.doc(`users/${userID}/instruments/${symbol}`)
+	const document = service.document.doc(`/instruments/${symbol}`)
 	return document.get()
 		.catch((err) => Promise.reject(new NError('instrument read failed', err)))
 		.then((snapshot) => {
@@ -125,31 +108,42 @@ function getInstrument (store, userID, symbol) {
 }
 
 	superagent
-		.get(`${endpoint}/instruments`)
+		.get(`${endpoint }/instruments`)
 		.query({ symbols: request.query.symbol })
 		.accept('json')
 		.set('x-mysolomeo-session-key', response.locals.sessionKey)
 		.catch(sendError(response, 500, 'not ok - instrument fetch failed'))
 		.then((result) => result.body[0])
-		.then((instrument) => response.locals.user.document.collection('instruments').doc(request.query.symbol).set(instrument))
+		.then((instrument) => response.locals.service.document.collection('instruments').doc(request.query.symbol).set(instrument))
 		.catch(sendError(response, 500, 'not ok - instrument save failed'))
 		.then(() => response.send('ok'))
 */
 
 
-function validateSession (user) {
+function validateSession (service) {
 	// Check Session
-	const sessionKey = user.data.session && user.data.session.sessionKey
+	const sessionKey = service.data.session && service.data.session.sessionKey
 	if (!sessionKey) return Promise.reject(new NError('missing session'))
-	return Promise.resolve(user)
+	return Promise.resolve(service)
 }
 
-function createOrder ({ user, action, instrument, accountSummary }) {
+function prepareOrder (service, action, symbol) {
+	const state = {}
+	return Promise.all([
+		fetchInstrument(service, symbol).then((instrument) => {
+			state.instrument = instrument
+		}),
+		fetchAccountSummary(service).then((accountSummary) => {
+			state.accountSummary = accountSummary
+		})
+	]).then(() => state)
+}
+function placeOrder (service, action, instrument, accountSummary) {
 	// Fetch
-	const session = user.data.session
-	const sessionKey = user.data.session.sessionKey
+	const session = service.data.session
+	const sessionKey = service.data.session.sessionKey
 	const account = session.accounts[0]
-	const percent = (user.data.percent || 45) / 100  /* @todo use a higher percentage if the account is a margin account */
+	const percent = (service.data.percent || 45) / 100  /* @todo use a higher percentage if the account is a margin account */
 	const available = accountSummary.cash.cashAvailableForTrade
 
 	// Prepare Order
@@ -192,4 +186,8 @@ function createOrder ({ user, action, instrument, accountSummary }) {
 		.catch((err) => Promise.reject(new NError('create order failed because the request failed', err)))
 }
 
-module.exports = { getUser, createUser, createSession, fetchAccountSummary, fetchAccount, fetchInstrument, validateSession, createOrder }
+function createOrder (service, action, symbol) {
+	return prepareOrder(service, action, symbol).then(({ instrument, accountSummary }) => placeOrder(service, action, instrument, accountSummary))
+}
+
+module.exports = { createService, createSession, fetchAccountSummary, fetchAccount, fetchInstrument, validateSession, createOrder }
