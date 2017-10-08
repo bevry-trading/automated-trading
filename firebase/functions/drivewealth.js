@@ -149,7 +149,7 @@ function createOrder ({ user, action, instrument, accountSummary }) {
 	const session = user.data.session
 	const sessionKey = user.data.session.sessionKey
 	const account = session.accounts[0]
-	const percent = (user.data.percent || 50) / 100
+	const percent = (user.data.percent || 45) / 100  /* @todo use a higher percentage if the account is a margin account */
 	const available = accountSummary.cash.cashAvailableForTrade
 
 	// Prepare Order
@@ -168,7 +168,7 @@ function createOrder ({ user, action, instrument, accountSummary }) {
 			return Promise.reject(new NError('create order failed because trade size is too small', { order, available, percent }))
 		}
 	}
-	else if (action === 'sell') {
+	else if (action === 'sell' || action === 'short') { /* @todo add short support when drivewealth adds short support */
 		order.side = 'S'
 		const positions = accountSummary.equity.equityPositions
 		const active = positions.find((item) => item.instrumentID === order.instrumentID)
