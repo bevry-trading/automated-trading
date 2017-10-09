@@ -39,22 +39,33 @@ npm run deploy
 http -f POST https://VALUE.cloudfunctions.net/createUser \
     email='VALUE'
 
+
 # get bitfinex serviceid, use your bitfinex API details
 http -f POST https://VALUE.cloudfunctions.net/bitfinex_createService \
+    atuserid='VALUE' \
+    key='VALUE' \
+    secret='VALUE'
+
+
+# get itbit serviceid, use your itbit API details
+http -f POST https://VALUE.cloudfunctions.net/itbit_createService \
+    atuserid='VALUE' \
     userid='VALUE' \
     key='VALUE' \
-    VALUE='VALUE'
+    secret='VALUE'
+
 
 # get drivewealth serviceid, use your drivewealth login details
 http -f POST https://VALUE.cloudfunctions.net/drivewealth_createService \
-    userid='VALUE' \
+    atuserid='VALUE' \
     username='VALUE' \
     password='VALUE'
 
 # initialise drivewealth session
 http -f POST https://VALUE.cloudfunctions.net/drivewealth_createSession \
-    userid='VALUE' \
-    serviceid='VALUE'
+    atuserid='VALUE' \
+    atserviceid='VALUE'
+
 
 # remove the above commands from fish shell history
 history clear
@@ -111,7 +122,7 @@ Caller name lookup: disabled
 Configuare with: Webhooks, or TwiML Bins or Functions
 
 A message comes in:
-Webhook: https://VALUE.cloudfunctions.net/parse?userid=VALUE
+Webhook: https://VALUE.cloudfunctions.net/parse?atuserid=VALUE
 HTTP POST
 
 Primary handler fails: TwiML: reject
@@ -140,24 +151,24 @@ When you've made your strategy, then create alerts for it. Use the "SMS" feature
 #### Buy Stock Message
 
 ```
-{"serviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "buy"}
+{"atserviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "buy"}
 ```
 
 #### Sell Stock Message
 
 ```
-{"serviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "sell"}
+{"atserviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "sell"}
 ```
 
 #### Buy Crypto Message
 
 ```
-{"serviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
+{"atserviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
 ```
 
 #### Sell Crypto Message
 
 ```
-{"serviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
+{"atserviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
 ```
 
