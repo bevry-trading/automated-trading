@@ -35,7 +35,7 @@ function sendError (response, message) {
 }
 
 function getService (store, atuserid, atserviceid) {
-	if (!atuserid || !atserviceid) return Promise.reject(new NError('get service failed because invalid data'))
+	if (!atuserid || !atserviceid) return Promise.reject(new NError('get service failed because invalid credentials'))
 	const document = store.doc(`users/${atuserid}/services/${atserviceid}`)
 	return document.get()
 		.then((snapshot) => {
@@ -46,6 +46,19 @@ function getService (store, atuserid, atserviceid) {
 		.catch((err) => Promise.reject(new NError('get service failed because the read failed', err)))
 }
 
+function getServices (store, atuserid, atmarket) {
+	if (!atuserid || !atmarket) return Promise.reject(new NError('get service failed because invalid credentials'))
+	store.doc(`users/${atuserid}/services`)
+		.where('market', '==', atmarket)
+		.get()
+		.then((querySnapshot) => {
+			const result = []
+			querySnapshot.forEach((document) => result.push({ data: document.data(), document }))
+			return result
+		})
+		.catch((err) => Promise.reject(new NError('get services failed because the read failed', err)))
+}
+
 function createUser (store, email) {
 	if (!email) return Promise.reject(new NError('create user failed because invalid email'))
 	return store.collection('users')
@@ -54,4 +67,4 @@ function createUser (store, email) {
 		.then((ref) => ref.id)
 }
 
-module.exports = { NError, errorInspect, successInspect, sendError, getService, createUser }
+module.exports = { NError, errorInspect, successInspect, sendError, getService, getServices, createUser }

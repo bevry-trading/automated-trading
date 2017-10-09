@@ -9,7 +9,7 @@ const store = admin.firestore()
 
 // Configuration
 const datetime = new Date().toISOString()
-const { NError, sendError, getService, createUser } = require('./util')
+const { NError, sendError, getService, getServices, createUser } = require('./util')
 
 // Client
 const bitfinex = require('./bitfinex')
@@ -22,28 +22,41 @@ const drivewealth = require('./drivewealth')
 function order (data) {
 	const details = { input: data }
 	let service
-	return getService(store, data.atuserid, data.atserviceid)
-		.then((_service) => {
-			service = _service
-			if (service.data.service === 'drivewealth') {
-				return drivewealth.validateSession(service).then((service) => drivewealth.createOrder(service, data.action, data.symbol))
+	return Promise.resolve()
+		.then(() => {
+			if (data.atserviceid) {
+				return Promise.all([
+					getService(store, data.atuserid, data.atserviceid)
+				])
 			}
-			else if (service.data.service === 'bitfinex') {
-				return bitfinex.createOrder(service, data.action, data.from, data.to)
+			else if (data.atmarket) {
+				return getServices(store, data.atuserid, data.atmarket)
 			}
 			else {
-				return Promise.reject(new NError('invalid service'))
+				return Promise.reject(new Error('invalid service'))
 			}
 		})
-		.then((order) => {
-			if (!order) return Promise.reject(new NError('order missing', null, { order }))
-			details.output = order
-			service.document.collection('orders').add(details)
-		})
-		.then((ref) => {
-			details.order = ref.id
-			return `parse order success - ${ref.id}`
-		})
+		.then((services) => Promise.all(
+			services.map((service) => {
+				if (service.data.service === 'drivewealth') {
+					return drivewealth.validateSession(service).then((service) => drivewealth.createOrder(service, data.action, data.symbol))
+				}
+				else if (service.data.service === 'bitfinex') {
+					return bitfinex.createOrder(service, data.action, data.from, data.to)
+				}
+				else {
+					return Promise.reject(new NError('invalid service'))
+				}
+			})
+		))
+		.then((orders) => Promise.all(
+			orders.map((order) => {
+				if (!orders) return Promise.reject(new NError('order missing', null, { order }))
+				details.output = order
+				return service.document.collection('orders').add(details)
+					.then((ref) => `order created - ${ref.id}`)
+			})
+		))
 		.catch((err) => Promise.reject(new NError('parse order failed', err, details)))
 }
 
@@ -66,7 +79,7 @@ function parse (query, body) {
 	catch (err) {
 		return Promise.reject(new NError('parse request failed - invalid nested body', err))
 	}
-	if (!state.data.atuserid || !state.data.atserviceid) return Promise.reject(new NError('parse request failed - invalid credentials', null, state))
+	if (!state.data.atuserid) return Promise.reject(new NError('parse request failed - invalid credentials', null, state))
 	if (state.data.call === 'order') return order(state.data).catch((err) => Promise.reject(new NError('parse request failed', err, state)))
 	return Promise.reject(new NError('invalid call', null, state))
 }
@@ -88,7 +101,7 @@ exports.createUser = functions.https.onRequest(function (request, response) {
 
 exports.parse = functions.https.onRequest(function (request, response) {
 	return parse(request.query, request.body)
-		.then((result) => response.send('ok - ' + result))
+		.then((result) => response.send({ result }))
 		.catch(sendError(response, 'not ok'))
 })
 

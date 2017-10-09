@@ -151,24 +151,23 @@ When you've made your strategy, then create alerts for it. Use the "SMS" feature
 #### Buy Stock Message
 
 ```
-{"atserviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "buy"}
+{"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "buy"}
 ```
 
 #### Sell Stock Message
 
 ```
-{"atserviceid": "VALUE", "call": "order", "symbol": "TSLA", "action": "sell"}
+{"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "sell"}
 ```
 
 #### Buy Crypto Message
 
 ```
-{"atserviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
+{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
 ```
 
 #### Sell Crypto Message
 
 ```
-{"atserviceid": "VALUE", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
+{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
 ```
-
