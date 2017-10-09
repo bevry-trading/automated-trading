@@ -1,5 +1,5 @@
 //@version=3
-// study(title="bal--candle-to-renko--study", shorttitle="bc2rs", overlay=false)
+// https://github.com/balupton/automated-trading
 strategy(title="bal--candle-to-renko--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // ====================================
