@@ -48,7 +48,7 @@ function getService (store, atuserid, atserviceid) {
 
 function getServices (store, atuserid, atmarket) {
 	if (!atuserid || !atmarket) return Promise.reject(new NError('get service failed because invalid credentials'))
-	store.doc(`users/${atuserid}/services`)
+	store.collection(`users/${atuserid}/services`)
 		.where('atmarket', '==', atmarket)
 		.get()
 		.then((querySnapshot) => {
