@@ -49,9 +49,9 @@ function post (path, service, params) {
 		})))
 }
 
-function createService (store, userid, key, secret) {
+function createService (store, atuserid, key, secret) {
 	if (!key || !secret) return Promise.reject(new NError('create service failed because invalid auth'))
-	return store.collection(`users/${userid}/services`)
+	return store.collection(`users/${atuserid}/services`)
 		.add({ key, secret, service: 'bitfinex', market: 'cryptocurrency' })
 		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
@@ -64,40 +64,6 @@ function fetchTicker (symbol) {
 
 function fetchBalances (service) {
 	return post('balances', service, {}).catch((err) => Promise.reject(new NError('fetch balances failed', err)))
-
-	/*
-	[{
-		"type": "deposit",
-		"currency": "btc",
-		"amount": "0.0",
-		"available": "0.0"
-	}, {
-		"type": "deposit",
-		"currency": "usd",
-		"amount": "1.0",
-		"available": "1.0"
-	}, {
-		"type": "exchange",
-		"currency": "btc",
-		"amount": "1",
-		"available": "1"
-	}, {
-		"type": "exchange",
-		"currency": "usd",
-		"amount": "1",
-		"available": "1"
-	}, {
-		"type": "trading",
-		"currency": "btc",
-		"amount": "1",
-		"available": "1"
-	}, {
-		"type": "trading",
-		"currency": "usd",
-		"amount": "1",
-		"available": "1"
-	}]
-	*/
 }
 
 function fetchBalance (service, symbol) {

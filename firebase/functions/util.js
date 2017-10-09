@@ -34,9 +34,9 @@ function sendError (response, message) {
 	}
 }
 
-function getService (store, userid, serviceid) {
-	if (!userid || !serviceid) return Promise.reject(new NError('get service failed because invalid data'))
-	const document = store.doc(`users/${userid}/services/${serviceid}`)
+function getService (store, atuserid, atserviceid) {
+	if (!atuserid || !atserviceid) return Promise.reject(new NError('get service failed because invalid data'))
+	const document = store.doc(`users/${atuserid}/services/${atserviceid}`)
 	return document.get()
 		.then((snapshot) => {
 			const data = snapshot.data()

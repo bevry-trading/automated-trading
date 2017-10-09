@@ -13,6 +13,7 @@ const { NError, sendError, getService, createUser } = require('./util')
 
 // Client
 const bitfinex = require('./bitfinex')
+const itbit = require('./itbit')
 const drivewealth = require('./drivewealth')
 
 // ====================================
@@ -21,7 +22,7 @@ const drivewealth = require('./drivewealth')
 function order (data) {
 	const details = { input: data }
 	let service
-	return getService(store, data.userid, data.serviceid)
+	return getService(store, data.atuserid, data.atserviceid)
 		.then((_service) => {
 			service = _service
 			if (service.data.service === 'drivewealth') {
@@ -65,7 +66,7 @@ function parse (query, body) {
 	catch (err) {
 		return Promise.reject(new NError('parse request failed - invalid nested body', err))
 	}
-	if (!state.data.userid || !state.data.serviceid) return Promise.reject(new NError('parse request failed - invalid credentials', null, state))
+	if (!state.data.atuserid || !state.data.atserviceid) return Promise.reject(new NError('parse request failed - invalid credentials', null, state))
 	if (state.data.call === 'order') return order(state.data).catch((err) => Promise.reject(new NError('parse request failed', err, state)))
 	return Promise.reject(new NError('invalid call', null, state))
 }
@@ -81,7 +82,7 @@ exports.version = functions.https.onRequest(function (request, response) {
 exports.createUser = functions.https.onRequest(function (request, response) {
 	const { email } = Object.assign({}, request.query, request.body)
 	return createUser(store, email)
-		.then((userid) => response.send({ userid }))
+		.then((atuserid) => response.send({ atuserid }))
 		.catch(sendError(response))
 })
 
@@ -96,32 +97,76 @@ exports.parse = functions.https.onRequest(function (request, response) {
 // Routes: Bitfinex
 
 exports.bitfinex_createService = functions.https.onRequest(function (request, response) {
-	const { userid, key, secret } = Object.assign({}, request.query, request.body)
-	return bitfinex.createService(store, userid, key, secret)
-		.then((serviceid) => response.send({ serviceid }))
+	const { atuserid, key, secret } = Object.assign({}, request.query, request.body)
+	return bitfinex.createService(store, atuserid, key, secret)
+		.then((atservice) => response.send({ atservice }))
 		.catch(sendError(response))
 })
 
 exports.bitfinex_fetchBalances = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(bitfinex.fetchBalances)
 		.then((balances) => response.send({ balances }))
 		.catch(sendError(response))
 })
 
 exports.bitfinex_fetchBalance = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid, symbol } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
-		.then((user) => bitfinex.fetchBalance(user, symbol))
+	const { atuserid, atservice, symbol } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
+		.then((service) => bitfinex.fetchBalance(service, symbol))
 		.then((balance) => response.send({ balance }))
 		.catch(sendError(response))
 })
 
 exports.bitfinex_createOrder = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid, action, from, to } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice, action, from, to } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then((service) => bitfinex.createOrder(service, action, from, to))
+		.then((order) => response.send({ order }))
+		.catch(sendError(response))
+})
+
+
+
+// ------------------------------------
+// Routes: itBit
+
+exports.itbit_createService = functions.https.onRequest(function (request, response) {
+	const { atuserid, userid, key, secret } = Object.assign({}, request.query, request.body)
+	return itbit.createService(store, atuserid, userid, key, secret)
+		.then((atservice) => response.send({ atservice }))
+		.catch(sendError(response))
+})
+
+exports.itbit_fetchTicker = functions.https.onRequest(function (request, response) {
+	const { atuserid, atservice, symbol } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
+		.then((service) => itbit.fetchTicker(service, symbol))
+		.then((balance) => response.send({ balance }))
+		.catch(sendError(response))
+})
+
+exports.itbit_fetchWallets = functions.https.onRequest(function (request, response) {
+	const { atuserid, atservice } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
+		.then((service) => itbit.fetchWallets(service))
+		.then((balance) => response.send({ balance }))
+		.catch(sendError(response))
+})
+
+exports.itbit_fetchWallet = functions.https.onRequest(function (request, response) {
+	const { atuserid, atservice, symbol } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
+		.then((service) => itbit.fetchWallet(service, symbol))
+		.then((balance) => response.send({ balance }))
+		.catch(sendError(response))
+})
+
+exports.itbit_createOrder = functions.https.onRequest(function (request, response) {
+	const { atuserid, atservice, action, from, to, walletid } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
+		.then((service) => itbit.createOrder(service, action, from, to, walletid))
 		.then((order) => response.send({ order }))
 		.catch(sendError(response))
 })
@@ -131,23 +176,23 @@ exports.bitfinex_createOrder = functions.https.onRequest(function (request, resp
 // Routes: DriveWealth
 
 exports.drivewealth_createService = functions.https.onRequest(function (request, response) {
-	const { userid, username, password } = Object.assign({}, request.query, request.body)
-	return drivewealth.createService(store, userid, username, password)
-		.then((serviceid) => response.send({ serviceid }))
+	const { atuserid, username, password } = Object.assign({}, request.query, request.body)
+	return drivewealth.createService(store, atuserid, username, password)
+		.then((atservice) => response.send({ atservice }))
 		.catch(sendError(response))
 })
 
 exports.drivewealth_createSession = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(drivewealth.createSession)
 		.then(() => response.send('ok - saved session'))
 		.catch(sendError(response))
 })
 
 exports.drivewealth_getAccountSummary = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(drivewealth.validateSession)
 		.then(drivewealth.fetchAccountSummary)
 		.then((accountSummary) => response.send({ accountSummary }))
@@ -155,8 +200,8 @@ exports.drivewealth_getAccountSummary = functions.https.onRequest(function (requ
 })
 
 exports.drivewealth_getAccount = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(drivewealth.validateSession)
 		.then(drivewealth.fetchAccount)
 		.then((account) => response.send({ account }))
@@ -164,8 +209,8 @@ exports.drivewealth_getAccount = functions.https.onRequest(function (request, re
 })
 
 exports.drivewealth_getInstrument = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid, symbol } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice, symbol } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(drivewealth.validateSession)
 		.then((service) => drivewealth.fetchInstrument(service, symbol))
 		.then((instrument) => response.send({ instrument }))
@@ -173,8 +218,8 @@ exports.drivewealth_getInstrument = functions.https.onRequest(function (request,
 })
 
 exports.drivewealth_createOrder = functions.https.onRequest(function (request, response) {
-	const { userid, serviceid, action, symbol } = Object.assign({}, request.query, request.body)
-	return getService(store, userid, serviceid)
+	const { atuserid, atservice, action, symbol } = Object.assign({}, request.query, request.body)
+	return getService(store, atuserid, atservice)
 		.then(drivewealth.validateSession)
 		.then((service) => drivewealth.createOrder(service, action, symbol))
 		.then((order) => response.send({ order }))
