@@ -52,7 +52,7 @@ function post (path, service, params) {
 function createService (store, atuserid, key, secret) {
 	if (!key || !secret) return Promise.reject(new NError('create service failed because invalid auth'))
 	return store.collection(`users/${atuserid}/services`)
-		.add({ key, secret, service: 'bitfinex', market: 'cryptocurrency' })
+		.add({ key, secret, atservice: 'bitfinex', atmarket: 'cryptocurrency' })
 		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }

@@ -7,7 +7,7 @@ const endpoint = 'https://api.drivewealth.net/v1'
 function createService (store, atuserid, username, password) {
 	if (!username || !password) return Promise.reject(new NError('create service failed because missing username/password'))
 	return store.collection(`users/${atuserid}/services`)
-		.add({ username, password, service: 'drivewealth', market: 'stock' })
+		.add({ username, password, atservice: 'drivewealth', atmarket: 'stock' })
 		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }

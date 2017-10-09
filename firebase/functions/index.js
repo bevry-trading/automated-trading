@@ -38,10 +38,10 @@ function order (data) {
 		})
 		.then((services) => Promise.all(
 			services.map((service) => {
-				if (service.data.service === 'drivewealth') {
+				if (service.data.atservice === 'drivewealth') {
 					return drivewealth.validateSession(service).then((service) => drivewealth.createOrder(service, data.action, data.symbol))
 				}
-				else if (service.data.service === 'bitfinex') {
+				else if (service.data.atservice === 'bitfinex') {
 					return bitfinex.createOrder(service, data.action, data.from, data.to)
 				}
 				else {
