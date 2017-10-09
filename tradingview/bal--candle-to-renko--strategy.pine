@@ -31,17 +31,17 @@ Close2Down = (Change < 0) and (A < B and B < C) and (C > D)
 Close3Down = (Change < 0) and (A < B and B < C and C < D) and (D > E)
 
 LongEnter = Close2Up
-LongClose = Close1Down
+LongExit = Close1Down
 ShortEnter = Close2Down
-ShortClose = Close1Up
+ShortExit = Close1Up
 
 // ====================================
 // STRATEGY
 
 strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
-strategy.close("long", when = LongClose)
+strategy.close("long", when = LongExit)
 strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
-strategy.close("short", when = ShortClose)
+strategy.close("short", when = ShortExit)
 
 // strategy.risk.max_drawdown(10, strategy.percent_of_equity)
 // strategy.close_all(strategy.openprofit < 0)

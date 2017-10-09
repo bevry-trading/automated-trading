@@ -31,17 +31,20 @@ Close2Down = (Change < 0) and (A < B and B < C) and (C > D)
 Close3Down = (Change < 0) and (A < B and B < C and C < D) and (D > E)
 
 LongEnter = Close2Up
-LongClose = Close1Down
+LongExit = Close1Down
 ShortEnter = Close2Down
-ShortClose = Close1Up
+ShortExit = Close1Up
 
 // ====================================
 // STUDY
 
-LongEnterExit = LongEnter ? 1 : (LongClose ? -1 : 0)
+alertcondition(LongEnter, "buy")
+alertcondition(LongExit, "sell")
+alertcondition(ShortEnter, "short-enter")
+alertcondition(ShortExit, "short-exit")
+
+LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
 plotarrow(LongEnterExit, title='longenterexit')
 
-ShortEnterExit = ShortEnter ? 1 : (LongEnter ? -1 : 0)
+ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
 plotarrow(ShortEnterExit, title='shortenterexit')
-
-

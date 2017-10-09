@@ -36,28 +36,28 @@ npm run deploy
 
 ```
 # create a user and get its id
-http -f POST https://SECRET.cloudfunctions.net/createUser \
-    email='SECRET'
+http -f POST https://VALUE.cloudfunctions.net/createUser \
+    email='VALUE'
 
 # get bitfinex serviceid, use your bitfinex API details
-http -f POST https://SECRET.cloudfunctions.net/bitfinex_createService \
-    userid='SECRET' \
-    key='SECRET' \
-    secret='SECRET'
+http -f POST https://VALUE.cloudfunctions.net/bitfinex_createService \
+    userid='VALUE' \
+    key='VALUE' \
+    VALUE='VALUE'
 
 # get drivewealth serviceid, use your drivewealth login details
-http -f POST https://SECRET.cloudfunctions.net/drivewealth_createService \
-    userid='SECRET' \
-    username='SECRET' \
-    password='SECRET'
+http -f POST https://VALUE.cloudfunctions.net/drivewealth_createService \
+    userid='VALUE' \
+    username='VALUE' \
+    password='VALUE'
 
 # initialise drivewealth session
-http -f POST https://SECRET.cloudfunctions.net/drivewealth_createSession \
-    userid='SECRET' \
-    serviceid='SECRET'
+http -f POST https://VALUE.cloudfunctions.net/drivewealth_createSession \
+    userid='VALUE' \
+    serviceid='VALUE'
 
 # remove the above commands from fish shell history
-echo "all" | history delete --contains "http -f"
+history clear
 
 # remove the above commands from bash shell history
 rm ~/.bash_history
@@ -66,6 +66,29 @@ rm ~/.bash_history
 
 
 ## Twilio
+
+### TwiML Bins
+
+Create the following [TwiML Bins](https://www.twilio.com/console/runtime/twiml-bins)
+
+#### Reject
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Reject reason="busy" />
+</Response>
+```
+
+#### Nothing
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response></Response>
+```
+
+
+### Number
 
 Create a number and configure it like so:
 

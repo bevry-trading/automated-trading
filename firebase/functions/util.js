@@ -14,14 +14,23 @@ class NError extends Error {
 	}
 }
 
+function errorInspect (err) {
+	console.error(require('util').inspect(err, false, 10, false))
+}
+
+function successInspect (details) {
+	console.log(require('util').inspect(details, false, 10, false))
+}
+
 function sendError (response, message) {
 	return function (err) {
 		if (err) {
-			console.error(err)
+			errorInspect(err)
 			if (!message) message = err.message
 		}
 		if (!message) message = 'an unknown error occured'
 		response.status(err.statusCode || 500).send(message)
+		return Promise.resolve()
 	}
 }
 
@@ -45,4 +54,4 @@ function createUser (store, email) {
 		.then((ref) => ref.id)
 }
 
-module.exports = { NError, sendError, getService, createUser }
+module.exports = { NError, errorInspect, successInspect, sendError, getService, createUser }

@@ -19,10 +19,11 @@ const drivewealth = require('./drivewealth')
 // Helpers
 
 function order (data) {
-	const state = {}
+	const details = { input: data }
+	let service
 	return getService(store, data.userid, data.serviceid)
-		.then((service) => {
-			state.service = service
+		.then((_service) => {
+			service = _service
 			if (service.data.service === 'drivewealth') {
 				return drivewealth.validateSession(service).then((service) => drivewealth.createOrder(service, data.action, data.symbol))
 			}
@@ -33,28 +34,40 @@ function order (data) {
 				return Promise.reject(new NError('invalid service'))
 			}
 		})
-		.then((order) => state.service.document.collection('orders').add({ input: data, output: order }))
-		.then((ref) => `ok - parse order placed - ${ref.id}`)
-		.catch((err) => Promise.reject(new NError('parse order failed', err)))
+		.then((order) => {
+			if (!order) return Promise.reject(new NError('order missing', null, { order }))
+			details.output = order
+			service.document.collection('orders').add(details)
+		})
+		.then((ref) => {
+			details.order = ref.id
+			return `parse order success - ${ref.id}`
+		})
+		.catch((err) => Promise.reject(new NError('parse order failed', err, details)))
 }
-function parse (query, body = {}) {
-	const data = Object.assign({}, query)
+
+function parse (query, body) {
+	const state = {
+		query: null,
+		body: null,
+		data: null,
+		nestedBody: null
+	}
 	try {
-		body = (
-			typeof body.Body === 'string' && JSON.parse(body.Body.replace(/^TradingView alert: /, ''))
-		) || {}
+		state.query = Object.assign({}, query || {})
+		state.body = Object.assign({}, body || {})
+		state.data = Object.assign({}, state.query, state.body)
+		if (typeof state.data.Body === 'string') {
+			state.nestedBody = JSON.parse(state.data.Body.replace(/^TradingView alert: /, ''))
+			state.data = Object.assign({}, query, state.nestedBody)
+		}
 	}
 	catch (err) {
-		return Promise.reject(new NError('failed to parse nested body', err))
+		return Promise.reject(new NError('parse request failed - invalid nested body', err))
 	}
-
-	Object.assign(data, body)
-
-	if (!data.userid || !data.serviceid) return Promise.reject(new NError('invalid credentials'))
-
-	if (data.call === 'order') return order(data)
-
-	return Promise.reject(new NError('invalid call'))
+	if (!state.data.userid || !state.data.serviceid) return Promise.reject(new NError('parse request failed - invalid credentials', null, state))
+	if (state.data.call === 'order') return order(state.data).catch((err) => Promise.reject(new NError('parse request failed', err, state)))
+	return Promise.reject(new NError('invalid call', null, state))
 }
 
 
@@ -74,8 +87,8 @@ exports.createUser = functions.https.onRequest(function (request, response) {
 
 exports.parse = functions.https.onRequest(function (request, response) {
 	return parse(request.query, request.body)
-		.then((result) => response.send(result))
-		.catch(sendError('response', 'not ok'))
+		.then((result) => response.send('ok - ' + result))
+		.catch(sendError(response, 'not ok'))
 })
 
 

@@ -7,7 +7,7 @@ const endpoint = 'https://api.drivewealth.net/v1'
 function createService (store, userid, username, password) {
 	if (!username || !password) return Promise.reject(new NError('create service failed because missing username/password'))
 	return store.collection(`users/${userid}/services`)
-		.add({ username, password, service: 'drivewealth' })
+		.add({ username, password, service: 'drivewealth', market: 'stock' })
 		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }
@@ -128,15 +128,10 @@ function validateSession (service) {
 }
 
 function prepareOrder (service, action, symbol) {
-	const state = {}
 	return Promise.all([
-		fetchInstrument(service, symbol).then((instrument) => {
-			state.instrument = instrument
-		}),
-		fetchAccountSummary(service).then((accountSummary) => {
-			state.accountSummary = accountSummary
-		})
-	]).then(() => state)
+		fetchInstrument(service, symbol),
+		fetchAccountSummary(service)
+	])
 }
 function placeOrder (service, action, instrument, accountSummary) {
 	// Fetch
@@ -187,7 +182,7 @@ function placeOrder (service, action, instrument, accountSummary) {
 }
 
 function createOrder (service, action, symbol) {
-	return prepareOrder(service, action, symbol).then(({ instrument, accountSummary }) => placeOrder(service, action, instrument, accountSummary))
+	return prepareOrder(service, action, symbol).then(([instrument, accountSummary]) => placeOrder(service, action, instrument, accountSummary))
 }
 
 module.exports = { createService, createSession, fetchAccountSummary, fetchAccount, fetchInstrument, validateSession, createOrder }
