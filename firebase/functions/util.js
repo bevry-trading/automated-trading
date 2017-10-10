@@ -14,12 +14,25 @@ class NError extends Error {
 	}
 }
 
+let counter = 0
+function count () {
+	return ++counter
+}
+
+function logError (...args) {
+	console.error(count(), ...args)
+}
+
+function log (...args) {
+	console.log(count(), ...args)
+}
+
 function errorInspect (err) {
-	console.error(require('util').inspect(err, false, 10, false))
+	logError(require('util').inspect(err, false, 10, false))
 }
 
 function successInspect (details) {
-	console.log(require('util').inspect(details, false, 10, false))
+	log(require('util').inspect(details, false, 10, false))
 }
 
 function sendError (response, message) {
@@ -54,6 +67,7 @@ function getServices (store, atuserid, atmarket) {
 		.then((querySnapshot) => {
 			const result = []
 			querySnapshot.forEach((document) => result.push({ data: document.data(), document }))
+			log('get services', result.length)
 			return result
 		})
 		.catch((err) => Promise.reject(new NError('get services failed because the read failed', err)))
@@ -67,4 +81,4 @@ function createUser (store, email) {
 		.then((ref) => ref.id)
 }
 
-module.exports = { NError, errorInspect, successInspect, sendError, getService, getServices, createUser }
+module.exports = { count, logError, log, NError, errorInspect, successInspect, sendError, getService, getServices, createUser }

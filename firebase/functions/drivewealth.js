@@ -121,7 +121,6 @@ function getInstrument (store, service, symbol) {
 
 
 function validateSession (service) {
-	// Check Session
 	const sessionKey = service.data.session && service.data.session.sessionKey
 	if (!sessionKey) return Promise.reject(new NError('missing session'))
 	return Promise.resolve(service)
