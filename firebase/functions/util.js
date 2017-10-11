@@ -20,7 +20,7 @@ function count () {
 }
 
 function logError (...args) {
-	console.error(count(), ...args)
+	console.error(...args)
 }
 
 function log (...args) {

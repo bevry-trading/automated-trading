@@ -6,6 +6,10 @@ const superagent = require('superagent')
 const { NError } = require('./util')
 const endpoint = 'https://api.itbit.com/v1'
 
+function prepareCurrency (currency) {
+	return currency.toUpperCase().replace('BTC', 'XBT')
+}
+
 // https://api.itbit.com/docs#faq-1.-why-do-i-keep-getting-"bad-signature"-responses?
 function request (service, method, path, params) {
 	const { key, secret } = service.data
@@ -15,11 +19,11 @@ function request (service, method, path, params) {
 
 	const timestamp = Date.now().toString()
 	const nonce = timestamp
-	const list = [method, url, params || '', nonce, nonce]
+	const list = [method.toUpperCase(), url, params || '', nonce, timestamp]
 	const listString = nonce + JSON.stringify(list)
-	const hash = crypto.createHash('sha256').update(listString).digest('hex') // latin1 || base64
-	const hashString = url + hash
-	const signature = crypto.createHmac('sha512', secret).update(hashString).digest('base64')
+	const hash = crypto.createHash('sha256').update(listString).digest() // latin1 || base64 || hex
+	const concat = Buffer.concat([Buffer.from(url), hash])
+	const signature = crypto.createHmac('sha512', secret).update(concat).digest('base64')
 	const headers = {
 		'Authorization': `${key}:${signature}`,
 		'X-Auth-Timestamp': timestamp,
@@ -38,7 +42,7 @@ function request (service, method, path, params) {
 function createService (store, atuser, userid, key, secret) {
 	if (!key || !secret) return Promise.reject(new NError('create service failed because invalid auth'))
 	return store.collection(`users/${atuser}/services`)
-		.add({ userid, key, secret, service: 'itbit', market: 'cryptocurrency' })
+		.add({ userid, key, secret, atservice: 'itbit', atmarket: 'cryptocurrency' })
 		.catch((err) => Promise.reject(new NError('create service failed because the save failed', err)))
 		.then((ref) => ref.id)
 }
@@ -57,47 +61,52 @@ function fetchWallet (service, walletid) {
 	return request(service, 'get', `wallets/${walletid}`).catch((err) => Promise.reject(new NError('fetch wallet failed', err)))
 }
 function fetchWalletCurrencyBalance (wallet, currency) {
+	currency = prepareCurrency(currency)
 	const result = wallet.balances.find((balance) => balance.currency === currency)
-	if (!result) return Promise.reject(new NError('currency in wallet not found', null, { wallet, currency }))
-	return result.availableBalance
+	if (result == null) return Promise.reject(new NError('currency in wallet not found', null, { wallet, currency }))
+	return Number(result.availableBalance)
 }
 
-// https://bitfinex.readme.io/v1/reference#rest-auth-new-order
-function createOrder (service, action, from, to, walletid) {
-	if (!action || !from || !to) return Promise.reject(new Error('invalid inputs'))
-	if (action !== 'buy' && action !== 'sell') return Promise.reject(new Error('invalid action'))
-	const symbol = from + to
+// https://api.itbit.com/docs#trading-new-order
+function createOrder (service, symbol, action, walletid) {
+	if (!symbol || !action) return Promise.reject(new Error('invalid inputs'))
+
+	symbol = prepareCurrency(symbol)
+
+	if (symbol !== 'XBTUSD') return Promise.reject(new NError('unsupported symbol', null, { symbol }))
+	if (['buy', 'sell'].indexOf(action) === -1) return Promise.reject(new NError('unsupported action', null, { action }))
 
 	const walletPromise = walletid
 		? fetchWallet(service, walletid)
 		: fetchWallets(service).then((wallets) => wallets[0])
 	const walletBalancePromise = walletPromise
 		.then((wallet) => Promise.all([
-			walletid,
-			fetchWalletCurrencyBalance(wallet, from),
-			fetchWalletCurrencyBalance(wallet, to)
+			wallet.id,
+			fetchWalletCurrencyBalance(wallet, 'XBT'),
+			fetchWalletCurrencyBalance(wallet, 'USD')
 		]))
-	const tickerPricePromise = fetchTicker(service, symbol)
-		.then((ticker) => (ticker.bid + ticker.amount) / 2)
+	const tickerPricePromise = fetchTicker(service, symbol).then((ticker) => (Number(ticker.ask) + Number(ticker.bid)) / 2)
 
 	return Promise
 		.all([
 			walletBalancePromise,
 			tickerPricePromise
 		])
-		.then(([[walletid, balanceFrom, balanceTo], mid]) => {
-			const amount = (action === 'sell' ? balanceFrom : (balanceTo / mid)).toString()
-			return request(service, 'post', `/wallets/${walletid}/orders`, {
-				side: action, // buy or sell
+		.then(([[walletid, balanceXBT, balanceUSD], mid]) => {
+			const amount = (action === 'sell' ? balanceXBT : (balanceUSD / mid)).toFixed(4)
+			const price = mid.toFixed(4)
+			const data = {
+				side: action,
 				type: 'limit',
-				currency: from,
+				currency: 'XBT',
 				amount,
 				display: amount,
-				price: mid.toString(),
+				price,
 				instrument: symbol
-			})
+			}
+			return request(service, 'post', `/wallets/${walletid}/orders`, data)
 		})
 		.catch((err) => Promise.reject(new NError('create order failed', err)))
 }
 
-module.exports = { createService, fetchWallets, fetchWallet, createOrder }
+module.exports = { createService, fetchTicker, fetchWallets, fetchWallet, createOrder }

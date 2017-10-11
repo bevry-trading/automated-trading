@@ -126,7 +126,7 @@ function validateSession (service) {
 	return Promise.resolve(service)
 }
 
-function prepareOrder (service, action, symbol) {
+function prepareOrder (service, symbol) {
 	return Promise.all([
 		fetchInstrument(service, symbol),
 		fetchAccountSummary(service)
@@ -180,8 +180,8 @@ function placeOrder (service, action, instrument, accountSummary) {
 		.catch((err) => Promise.reject(new NError('create order failed because the request failed', err)))
 }
 
-function createOrder (service, action, symbol) {
-	return prepareOrder(service, action, symbol).then(([instrument, accountSummary]) => placeOrder(service, action, instrument, accountSummary))
+function createOrder (service, symbol, action) {
+	return prepareOrder(service, symbol).then(([instrument, accountSummary]) => placeOrder(service, action, instrument, accountSummary))
 }
 
 module.exports = { createService, createSession, fetchAccountSummary, fetchAccount, fetchInstrument, validateSession, createOrder }

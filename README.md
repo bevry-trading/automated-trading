@@ -54,6 +54,11 @@ http -f POST https://VALUE.cloudfunctions.net/itbit_createService \
     key='VALUE' \
     secret='VALUE'
 
+# verify itbit
+http -f POST https://VALUE.cloudfunctions.net/itbit_fetchWallets \
+    atuserid='VALUE' \
+    atserviceid='VALUE'
+
 
 # get drivewealth serviceid, use your drivewealth login details
 http -f POST https://VALUE.cloudfunctions.net/drivewealth_createService \

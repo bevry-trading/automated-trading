@@ -7,6 +7,10 @@ const { log, NError } = require('./util')
 const endpoint = 'https://api.bitfinex.com'
 const version = 'v1'
 
+function prepareCurrency (currency) {
+	return currency.toLowerCase().replace('xbt', 'btc')
+}
+
 function get (path) {
 	log('bitfinex get', path)
 	const url = `${endpoint}/${version}/${path}`
@@ -76,25 +80,31 @@ function fetchBalance (balances, symbol) {
 }
 
 // https://bitfinex.readme.io/v1/reference#rest-auth-new-order
-function createOrder (service, action, from, to) {
-	log('bitfinex order', from, to)
-	if (!action || !from || !to) return Promise.reject(new Error('invalid inputs'))
-	if (action !== 'buy' && action !== 'sell') return Promise.reject(new Error('invalid action'))
-	const symbol = from + to
+function createOrder (service, symbol, action) {
+	log('bitfinex order', symbol, action)
+	if (!symbol || !action) return Promise.reject(new Error('invalid inputs'))
+
+	symbol = prepareCurrency(symbol)
+
+	if (symbol !== 'btcusd') return Promise.reject(new NError('unsupported symbol', null, { symbol }))
+	if (['buy', 'sell'].indexOf(action) === -1) return Promise.reject(new NError('unsupported action', null, { action }))
+
 	return Promise
 		.all([
 			fetchBalances(service).then((balances) => Promise.all([
-				fetchBalance(balances, from),
-				fetchBalance(balances, to)
+				fetchBalance(balances, 'btc'),
+				fetchBalance(balances, 'usd')
 			])),
 			fetchTicker(symbol)
 		])
-		.then(([[balanceFrom, balanceTo], ticker]) => {
-			log('bitfinex create order', balanceFrom, balanceTo, ticker)
-			return post('order/new', service, {
+		.then(([[balanceBTC, balanceUSD], ticker]) => {
+			log('bitfinex create order', balanceBTC, balanceUSD, ticker)
+			const amount = (action === 'sell' ? balanceBTC : (balanceUSD / ticker.mid)).toString()
+			const price = ticker.mid.toString()
+			const data = {
 				symbol,
-				amount: (action === 'sell' ? balanceFrom : (balanceTo / ticker.mid)).toString(),
-				price: ticker.mid.toString(),
+				amount,
+				price,
 				use_all_available: '1',
 				is_hidden: false,
 				is_postonly: false,
@@ -103,7 +113,8 @@ function createOrder (service, action, from, to) {
 				sell_price_oco: '0',
 				side: action, // buy or sell
 				type: 'exchange market'
-			})
+			}
+			return post('order/new', service, data)
 		})
 		.catch((err) => Promise.reject(new NError('create order failed', err)))
 }
