@@ -1,4 +1,4 @@
-# Trading View Strategies
+# [Trading View](http://balupton.com/tradingview) Strategies
 
 Naming convention are female names iterating through letters of the english alphabet. Once Z is done, restart at A.
 
