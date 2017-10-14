@@ -69,6 +69,7 @@ I am not sure open-sourcing of this is a good or bad idea, as it could be I am n
     1. someone more familiar with big finance notices the potential in the project, and reaches out to help make it happen, offering expertise and/or funding and/or team suggestions
     1. others also interested in this area help flesh this out, where ones expertise in one area compliments ones naiveity in another - this could be accomplished without open-source, but to do it without open-source, I'll need to hire people, of which, I'll need to find people to hire (first problem), and then to hire them (second problem)
     1. some assumptions or code in this project could be fatally flawed, and someone else can spot it before it becomes more of a liability
+    1. the progress of strategies and implementation can be shared with support groups, to faciliate improvements and collaboration
 
 
 ## Installation
