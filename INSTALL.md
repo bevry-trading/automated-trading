@@ -151,11 +151,11 @@ When you've made your strategy, then create alerts for it. Use the "SMS" feature
 #### Buy Crypto Message
 
 ```
-{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
+{"atmarket": "cryptocurrency", "call": "order", "symbol": "BTCUSD", "action": "buy"}
 ```
 
 #### Sell Crypto Message
 
 ```
-{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
+{"atmarket": "cryptocurrency", "call": "order", "symbol": "BTCUSD", "action": "sell"}
 ```
