@@ -61,14 +61,14 @@ I am not sure open-sourcing of this is a good or bad idea, as it could be I am n
 
 1. Bad idea:
     1. someone more familiar with big finance takes an optimal strategy stored here, and sells it to big finance making millions of dollars without me, ruining my return on investment
-    1. some assumptions or code in this project are fatally flawed, and someone decides to exploit it
+    1. some assumptions or code in this project could be fatally flawed, and someone decides to exploit it
 1. Neutral idea:
     1. a larger team takes the ambitions here, and makes the project happen without me — neutral return on investment, as I will still benefit from their result, even if my own investment was at a loss
     1. individuals and firms may not trust the project with their money, unless they too can inspect its operations, which open-source provides - however, they could just fork it, and setup their own product based off it, using their big brand name as leverage
 1. Good idea:
-    1. someone more familiar with big finance notices the potential in the project, and reaches out to help make it happen, offering their expertise
-    1. others also interested in this area help flesh this out, where ones expertise in one area compliments ones naiveity in another
-    1. some assumptions or code in this project are fatally flawed, and someone else can spot it before it becomes more of a liability
+    1. someone more familiar with big finance notices the potential in the project, and reaches out to help make it happen, offering expertise and/or funding and/or team suggestions
+    1. others also interested in this area help flesh this out, where ones expertise in one area compliments ones naiveity in another - this could be accomplished without open-source, but to do it without open-source, I'll need to hire people, of which, I'll need to find people to hire (first problem), and then to hire them (second problem)
+    1. some assumptions or code in this project could be fatally flawed, and someone else can spot it before it becomes more of a liability
 
 
 ## Functions Setup
