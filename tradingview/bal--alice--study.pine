@@ -1,6 +1,6 @@
 //@version=3
 // https://github.com/balupton/automated-trading
-study(title="bal--alice--study", shorttitle="alice", overlay=false)
+strategy(title="bal--alice--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // ====================================
 // STUDY AND STRATEGY
@@ -19,15 +19,23 @@ ShortEnter = Valid and falling(close, ShortEnterAfter)
 ShortExit = Valid and rising(close, ShortExitAfter)
 
 // ====================================
-// STUDY
+// STRATEGY
 
-alertcondition(LongEnter, "buy")
-alertcondition(LongExit, "sell")
-alertcondition(ShortEnter, "short-enter")
-alertcondition(ShortExit, "short-exit")
+TradeSinceYear = input(title="trade since year", type=integer, defval=2017)
+TradeSinceMonth = input(title="trade since month", type=integer, defval=1)
 
-LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
-plotarrow(LongEnterExit, title='longenterexit')
+if year > TradeSinceYear or (year == TradeSinceYear and month >= TradeSinceMonth)
+    strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
+    strategy.close("long", when = LongExit)
 
-ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
-plotarrow(ShortEnterExit, title='shortenterexit')
+    strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
+    strategy.close("short", when = ShortExit)
+
+// closeAll = strategy.netprofit < 0
+// strategy.close_all(closeAll)
+
+// openprofitColor = strategy.openprofit < 0 ? red : green
+// plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
+
+// netprofitColor = strategy.netprofit < 0 ? yellow : blue
+// plot(strategy.netprofit, title = "netprofit", color = netprofitColor)

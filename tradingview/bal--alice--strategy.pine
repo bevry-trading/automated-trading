@@ -22,18 +22,17 @@ ShortExit = Valid and rising(close, ShortExitAfter)
 // STRATEGY
 
 strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
-strategy.close("long", when = exitLong)
+strategy.close("long", when = LongExit)
 
 strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
-strategy.close("short", when = exitShort)
+strategy.close("short", when = ShortExit)
 
 // closeAll = strategy.netprofit < 0
 // strategy.close_all(closeAll)
 
 openprofitColor = strategy.openprofit < 0 ? red : green
-plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
+// plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
 
 netprofitColor = strategy.netprofit < 0 ? yellow : blue
-plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
-
+// plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
 
