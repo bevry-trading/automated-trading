@@ -9,7 +9,7 @@ https://firebase.google.com/docs/functions/get-started
 
 ### Clone & Deploy
 
-```
+``` bash
 git clone https://github.com/balupton/automated-trading.git
 cd automated-trading
 npm run deploy
@@ -17,7 +17,7 @@ npm run deploy
 
 ### Account Creation
 
-```
+``` bash
 # create a user and get its id
 http -f POST https://VALUE.cloudfunctions.net/createUser \
     email='VALUE'
@@ -138,24 +138,24 @@ When you've made your strategy, then create alerts for it. Use the "SMS" feature
 
 #### Buy Stock Message
 
-```
+``` json
 {"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "buy"}
 ```
 
 #### Sell Stock Message
 
-```
+``` json
 {"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "sell"}
 ```
 
 #### Buy Crypto Message
 
-```
+``` json
 {"atmarket": "cryptocurrency", "call": "order", "symbol": "BTCUSD", "action": "buy"}
 ```
 
 #### Sell Crypto Message
 
-```
+``` json
 {"atmarket": "cryptocurrency", "call": "order", "symbol": "BTCUSD", "action": "sell"}
 ```
