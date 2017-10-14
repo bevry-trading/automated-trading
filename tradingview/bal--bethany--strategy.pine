@@ -1,6 +1,6 @@
 //@version=3
 // https://github.com/balupton/automated-trading
-study(title="bal--candle-to-renko--study", shorttitle="bc2rs", overlay=false)
+strategy(title="bal-bethany--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // ====================================
 // STUDY AND STRATEGY
@@ -36,15 +36,18 @@ ShortEnter = Close2Down
 ShortExit = Close1Up
 
 // ====================================
-// STUDY
+// STRATEGY
 
-alertcondition(LongEnter, "buy")
-alertcondition(LongExit, "sell")
-alertcondition(ShortEnter, "short-enter")
-alertcondition(ShortExit, "short-exit")
+strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
+strategy.close("long", when = LongExit)
+strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
+strategy.close("short", when = ShortExit)
 
-LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
-plotarrow(LongEnterExit, title='longenterexit')
+// strategy.risk.max_drawdown(10, strategy.percent_of_equity)
+// strategy.close_all(strategy.openprofit < 0)
 
-ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
-plotarrow(ShortEnterExit, title='shortenterexit')
+OpenProfitColor = strategy.openprofit < 0 ? purple : blue
+// plot(strategy.openprofit, title = "openprofit", color = OpenProfitColor)
+
+NetProfitColor = strategy.netprofit < 0 ? purple : blue
+// plot(strategy.netprofit, title = "netprofit", color = NetProfitColor)

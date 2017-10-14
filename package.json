@@ -2,7 +2,7 @@
   "name": "automated-trading",
   "version": "1.0.0",
   "author": "Benjamin Lupton <b@lupton.cc>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": "8"
   },

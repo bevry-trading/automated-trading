@@ -1,2 +1,0 @@
-RenkoMA = sma(RenkoClose, 9)
-plot(RenkoMA, title='renko-ma', color=blue)

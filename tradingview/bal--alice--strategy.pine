@@ -1,0 +1,39 @@
+//@version=3
+// https://github.com/balupton/automated-trading
+strategy(title="bal--alice--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// ====================================
+// STUDY AND STRATEGY
+
+// Inputs
+LongEnterAfter = input(title="enter long after X rising blocks", type=integer, defval=2)
+LongExitAfter = input(title="exit long after X falling blocks", type=integer, defval=1)
+ShortEnterAfter = input(title="enter short after X falling blocks", type=integer, defval=2)
+ShortExitAfter = input(title="exit short after X rising blocks", type=integer, defval=1)
+
+// Criteria
+Valid = change(time)
+LongEnter = Valid and rising(close, LongEnterAfter)
+LongExit = Valid and falling(close, LongExitAfter)
+ShortEnter = Valid and falling(close, ShortEnterAfter)
+ShortExit = Valid and rising(close, ShortExitAfter)
+
+// ====================================
+// STRATEGY
+
+strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
+strategy.close("long", when = exitLong)
+
+strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
+strategy.close("short", when = exitShort)
+
+// closeAll = strategy.netprofit < 0
+// strategy.close_all(closeAll)
+
+openprofitColor = strategy.openprofit < 0 ? red : green
+plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
+
+netprofitColor = strategy.netprofit < 0 ? yellow : blue
+plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
+
+

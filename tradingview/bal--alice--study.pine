@@ -1,0 +1,33 @@
+//@version=3
+// https://github.com/balupton/automated-trading
+study(title="bal--alice--study", shorttitle="alice", overlay=false)
+
+// ====================================
+// STUDY AND STRATEGY
+
+// Inputs
+LongEnterAfter = input(title="enter long after X rising blocks", type=integer, defval=2)
+LongExitAfter = input(title="exit long after X falling blocks", type=integer, defval=1)
+ShortEnterAfter = input(title="enter short after X falling blocks", type=integer, defval=2)
+ShortExitAfter = input(title="exit short after X rising blocks", type=integer, defval=1)
+
+// Criteria
+Valid = change(time)
+LongEnter = Valid and rising(close, LongEnterAfter)
+LongExit = Valid and falling(close, LongExitAfter)
+ShortEnter = Valid and falling(close, ShortEnterAfter)
+ShortExit = Valid and rising(close, ShortExitAfter)
+
+// ====================================
+// STUDY
+
+alertcondition(LongEnter, "buy")
+alertcondition(LongExit, "sell")
+alertcondition(ShortEnter, "short-enter")
+alertcondition(ShortExit, "short-exit")
+
+LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
+plotarrow(LongEnterExit, title='longenterexit')
+
+ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
+plotarrow(ShortEnterExit, title='shortenterexit')

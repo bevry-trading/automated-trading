@@ -1,0 +1,75 @@
+//@version=3
+// https://github.com/balupton/automated-trading
+study(title="bal--candice--study", shorttitle="candice", overlay=false)
+
+// ====================================
+// STUDY AND STRATEGY
+
+// Inputs
+LongEnterAfter = input(title="enter long after X rising blocks", type=integer, defval=2)
+LongExitAfter = input(title="exit long after X falling blocks", type=integer, defval=1)
+ShortEnterAfter = input(title="enter short after X falling blocks", type=integer, defval=2)
+ShortExitAfter = input(title="exit short after X rising blocks", type=integer, defval=1)
+
+// Fetch On-Market Data Only
+Session = session.regular
+Ticker = tickerid(syminfo.prefix, ticker, Session)
+RenkoSeries = renko(Ticker, "close", "ATR", 14)
+RenkoResolution = input("30", "Renko Resolution", type=resolution)
+
+// Get Renko Close for Everything
+RenkoClose = security(RenkoSeries, RenkoResolution, close)
+
+// Get Renko Open to Plot
+RenkoOpen = security(RenkoSeries, RenkoResolution, open)
+Up = RenkoOpen < RenkoClose
+RenkoColor =  Up ? green : red
+plotcandle(RenkoOpen, max(RenkoClose, RenkoOpen), min(RenkoClose, RenkoOpen), RenkoClose, title='renko', color=RenkoColor)
+
+// Calculate the Trend
+Uptrend = (RenkoClose[0] > RenkoClose[1])
+Downtrend = (RenkoClose[0] < RenkoClose[1])
+Streak = (Uptrend or Downtrend) ? 1 : 0
+Broke = false
+N = max(max(LongEnterAfter, LongExitAfter), max(ShortEnterAfter, ShortExitAfter))
+if Streak
+    for I = 1 to 1000000
+        C1 = RenkoClose[I]
+        C2 = RenkoClose[I + 1]
+        if C1 == C2
+            continue
+        else
+            if (Uptrend and C1 > C2) or (Downtrend and C1 < C2)
+                if Streak >= N
+                    Streak := -1
+                    Broke := true
+                    break
+                else
+                    Streak := Streak + 1
+                    continue
+            else
+                Broke := true
+                break
+
+// Specify Position Criteria
+LongEnter = Broke and Uptrend and Streak == LongEnterAfter
+LongExit = Broke and Downtrend and Streak == LongExitAfter
+ShortEnter = Broke and Downtrend and Streak == ShortEnterAfter
+ShortExit = Broke and Uptrend and Streak == ShortExitAfter
+
+// Plot Trend
+plot(Streak, title='streak', color=green)
+
+// ====================================
+// STUDY
+
+alertcondition(LongEnter, "buy")
+alertcondition(LongExit, "sell")
+alertcondition(ShortEnter, "short-enter")
+alertcondition(ShortExit, "short-exit")
+
+LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
+plotarrow(LongEnterExit, title='longenterexit')
+
+ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
+plotarrow(ShortEnterExit, title='shortenterexit')

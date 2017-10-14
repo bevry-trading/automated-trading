@@ -1,8 +1,6 @@
 # Automated Trading
 
-ALL RIGHTS RESERVED - COPYRIGHT BENJAMIN ARTHUR LUPTON
-
-THIS IS INTERNAL SOFTWARE FOR MY OWN USE — IF YOU USE IT, DO NOT BLAME ME!
+## Overview
 
 Goals:
 
@@ -149,6 +147,9 @@ Configure your Trading View phone numnber to be your Twilio one.
 
 Create a strategy and add its accompanying study. You need to add an accompanying study in order to link up alerts. As strategies for some silly reason cannot create alerts.
 
+You can find my strategies in the `tradingview` folder.
+
+
 ### Alerts
 
 When you've made your strategy, then create alerts for it. Use the "SMS" feature, and the appropriate message from the following:
@@ -176,3 +177,18 @@ When you've made your strategy, then create alerts for it. Use the "SMS" feature
 ```
 {"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
 ```
+
+
+## Disclaimer
+
+This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. In no event shall the authors, copyright holders, or Bevry be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+Use the software at your own risk. You are responsible for your own money. Past performance is not necessarily indicative of future results.
+
+The authors and all affiliates assume no responsibility for your trading results.
+
+
+## License
+
+Licensed under the [MIT License](http://creativecommons.org/licenses/MIT/)
+<br/>Copyright &copy; 2017+ [Benjamin Arthur Lupton](http://balupton.com)
