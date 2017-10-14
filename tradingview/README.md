@@ -16,7 +16,7 @@
 - Short Enter: After 2 Falling Renko Blocks
 - Short Exit: After 1 Rising Renko Blocks
 
-## Alice
+## Candice
 
 - Chart Type: Candle Stick
 - Long Enter: After X Rising Renko Blocks
