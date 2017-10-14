@@ -4,7 +4,7 @@
 
 This project is the automated trading setup used by [Benjamin Lupton](https://balupton.com), which already accomplishes:
 
-1. Trading View strategies are saved into the `tradingview` directory
+1. [Trading View](http://balupton.com/tradingview) strategies are saved into the [`tradingview` directory](https://github.com/balupton/automated-trading/tree/master/tradingview)
 1. Trading View strategies are added to the the Trading View interface, to see how they perform via Trading View's backtesting feature
 1. Trading View alerts are created via the study that accompanies the strategy (as Trading View strategies do not support alerts)
 1. Use Trading View's Server-Side SMS Alert feature to send the alert to a Twilio number
@@ -71,168 +71,10 @@ I am not sure open-sourcing of this is a good or bad idea, as it could be I am n
     1. some assumptions or code in this project could be fatally flawed, and someone else can spot it before it becomes more of a liability
 
 
-## Functions Setup
+## Installation
 
-### Setup Firebase
+See the [`INSTALL.md` guide](https://github.com/balupton/automated-trading/blob/master/INSTALL.md) for how to setup this project yourself. Once there is a user-facing app, this will not be needed.
 
-Get going with Firebase:
-https://firebase.google.com/docs/functions/get-started
-
-### Clone & Deploy
-
-```
-git clone https://github.com/balupton/automated-trading.git
-cd automated-trading
-npm run deploy
-```
-
-### Account Creation
-
-```
-# create a user and get its id
-http -f POST https://VALUE.cloudfunctions.net/createUser \
-    email='VALUE'
-
-
-# get bitfinex serviceid, use your bitfinex API details
-http -f POST https://VALUE.cloudfunctions.net/bitfinex_createService \
-    atuserid='VALUE' \
-    key='VALUE' \
-    secret='VALUE'
-
-
-# get itbit serviceid, use your itbit API details
-http -f POST https://VALUE.cloudfunctions.net/itbit_createService \
-    atuserid='VALUE' \
-    userid='VALUE' \
-    key='VALUE' \
-    secret='VALUE'
-
-# verify itbit
-http -f POST https://VALUE.cloudfunctions.net/itbit_fetchWallets \
-    atuserid='VALUE' \
-    atserviceid='VALUE'
-
-
-# get drivewealth serviceid, use your drivewealth login details
-http -f POST https://VALUE.cloudfunctions.net/drivewealth_createService \
-    atuserid='VALUE' \
-    username='VALUE' \
-    password='VALUE'
-
-# initialise drivewealth session
-http -f POST https://VALUE.cloudfunctions.net/drivewealth_createSession \
-    atuserid='VALUE' \
-    atserviceid='VALUE'
-
-
-# remove the above commands from fish shell history
-history clear
-
-# remove the above commands from bash shell history
-rm ~/.bash_history
-```
-
-
-
-## Twilio
-
-### TwiML Bins
-
-Create the following [TwiML Bins](https://www.twilio.com/console/runtime/twiml-bins)
-
-#### Reject
-
-``` xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Reject reason="busy" />
-</Response>
-```
-
-#### Nothing
-
-``` xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Response></Response>
-```
-
-
-### Number
-
-Create a number and configure it like so:
-
-```
-== Voice & Fax ==
-
-Accept incoming: Voice Calls
-
-Configure with: Webhooks, or TwiML Bins or Functions
-
-A call comes in: TwiML: nothing
-
-Primary handler fails: TwiML: reject
-
-Caller name lookup: disabled
-
-
-== Messaging ==
-
-Configuare with: Webhooks, or TwiML Bins or Functions
-
-A message comes in:
-Webhook: https://VALUE.cloudfunctions.net/parse?atuserid=VALUE
-HTTP POST
-
-Primary handler fails: TwiML: reject
-```
-
-
-
-## Trading View
-
-If you don't have Trading View, use my referral link to sign up:
-http://balupton.com/tradingview
-
-
-### Phone Number
-
-Configure your Trading View phone numnber to be your Twilio one.
-
-### Add Strategies
-
-Create a strategy and add its accompanying study. You need to add an accompanying study in order to link up alerts. As strategies for some silly reason cannot create alerts.
-
-You can find my strategies in the `tradingview` folder.
-
-
-### Alerts
-
-When you've made your strategy, then create alerts for it. Use the "SMS" feature, and the appropriate message from the following:
-
-#### Buy Stock Message
-
-```
-{"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "buy"}
-```
-
-#### Sell Stock Message
-
-```
-{"atmarket": "stock", "call": "order", "symbol": "TSLA", "action": "sell"}
-```
-
-#### Buy Crypto Message
-
-```
-{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "buy"}
-```
-
-#### Sell Crypto Message
-
-```
-{"atmarket": "cryptocurrency", "call": "order", "from": "btc", "to": "usd", "action": "sell"}
-```
 
 
 ## Disclaimer
