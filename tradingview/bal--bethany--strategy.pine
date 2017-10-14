@@ -1,6 +1,6 @@
 //@version=3
 // https://github.com/balupton/automated-trading
-strategy(title="bal-bethany--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+strategy(title="bal--bethany--strategy", overlay=false, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // ====================================
 // STUDY AND STRATEGY

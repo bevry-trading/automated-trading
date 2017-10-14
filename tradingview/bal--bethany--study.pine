@@ -1,6 +1,6 @@
 //@version=3
 // https://github.com/balupton/automated-trading
-study(title="bal--bethany--study", shorttitle="bethany", overlay=false)
+study(title="bal--bethany--study", overlay=false)
 
 // ====================================
 // STUDY AND STRATEGY

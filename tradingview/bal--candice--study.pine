@@ -1,6 +1,6 @@
 //@version=3
 // https://github.com/balupton/automated-trading
-study(title="bal--candice--study", shorttitle="candice", overlay=false)
+study(title="bal--candice--study", overlay=false)
 
 // ====================================
 // STUDY AND STRATEGY

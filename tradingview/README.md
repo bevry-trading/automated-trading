@@ -40,6 +40,11 @@ Problems:
 
 ## Bethany
 
+Preview:
+
+- [Strategy](https://www.tradingview.com/script/81bFZHWd-bal-bethany-strategy/)
+- [Study](https://www.tradingview.com/script/0ZcQwovr-bal-bethany-study/)
+
 Prescription:
 
 - Chart Type: Candle Stick
@@ -68,6 +73,11 @@ Problems:
 
 
 ## Candice
+
+Preview:
+
+- [Strategy](http://www.tradingview.com/script/EqaAAeCj-bal-candice-strategy/)
+- [Study](https://www.tradingview.com/script/bT9L205H-bal-candice-study/)
 
 Prescription:
 

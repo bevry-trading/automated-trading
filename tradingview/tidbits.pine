@@ -1,0 +1,12 @@
+
+// closeAll = strategy.netprofit < 0
+// strategy.close_all(closeAll)
+
+// strategy.risk.max_drawdown(10, strategy.percent_of_equity)
+// strategy.close_all(strategy.openprofit < 0)
+
+// OpenProfitColor = strategy.openprofit < 0 ? purple : blue
+// plot(strategy.openprofit, title = "openprofit", color = OpenProfitColor)
+
+// NetProfitColor = strategy.netprofit < 0 ? purple : blue
+// plot(strategy.netprofit, title = "netprofit", color = NetProfitColor)

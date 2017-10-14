@@ -30,12 +30,3 @@ if year > TradeSinceYear or (year == TradeSinceYear and month >= TradeSinceMonth
 
     strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
     strategy.close("short", when = ShortExit)
-
-// closeAll = strategy.netprofit < 0
-// strategy.close_all(closeAll)
-
-// openprofitColor = strategy.openprofit < 0 ? red : green
-// plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
-
-// netprofitColor = strategy.netprofit < 0 ? yellow : blue
-// plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
