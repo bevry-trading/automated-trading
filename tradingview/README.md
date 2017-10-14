@@ -34,8 +34,9 @@ Pros:
 
 Problems:
 
-1. Trading View's backtester places trades at prices that do not match up with the realtime price
-1. Trading View's `rising` and `falling` do not seem to work accurately, making this strategy risky in practice
+1. Trading View's backtester on renko charts places trades at prices that do not match up with the realtime price
+1. Trading View's `rising` and `falling` do not seem to work accurately on renko charts, making this strategy risky in practice
+
 
 ## Bethany
 
