@@ -11,6 +11,8 @@ This project is the automated trading setup used by [Benjamin Lupton](https://ba
 1. Use the Twilio number to send the message via Web Hook to a Firebase Function that parses it
 1. Use the Firebase Function to act upon the alert message, with the usual intention of placing a trade via one or more intended Exchange APIs
 
+That is to say, **this is already a working solution for placing automated trades with various exchanges via Trading View strategies**.
+
 With enough effort, it will also accomplish:
 
 1. Storage of trade data for historical reporting of profit and loss against strategies and securities
