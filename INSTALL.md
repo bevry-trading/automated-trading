@@ -129,7 +129,7 @@ Configure your Trading View phone numnber to be your Twilio one.
 
 Create a strategy and add its accompanying study. You need to add an accompanying study in order to link up alerts. As strategies for some silly reason cannot create alerts.
 
-You can find my strategies in the `tradingview` folder.
+You can strategies in the [`tradingview` directory](https://github.com/balupton/automated-trading/tree/master/tradingview).
 
 
 ### Alerts
