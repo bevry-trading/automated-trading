@@ -2,17 +2,46 @@
 
 ## Overview
 
-Goals:
+This project is the automated trading setup used by [Benjamin Lupton](https://balupton.com), which already accomplishes:
 
-1. Create trading view strategies that work very well
-2. Have those strategies place trades with my exchanges
+1. Trading View strategies are saved into the `tradingview` directory
+1. Trading View strategies are added to the the Trading View interface, to see how they perform via Trading View's backtesting feature
+1. Trading View alerts are created via the study that accompanies the strategy (as Trading View strategies do not support alerts)
+1. Use Trading View's Server-Side SMS Alert feature to send the alert to a Twilio number
+1. Use the Twilio number to send the message via Web Hook to a Firebase Function that parses it
+1. Use the Firebase Function to act upon the alert message, with the usual intention of placing a trade via one or more intended Exchange APIs
 
-Implementation:
+With enough effort, it will also accomplish:
 
-1. Trading View's server-side SMS
-2. Twilio Number
-3. Firebase Function
-4. DriveWealth/Bitfinex API
+1. Storage of trade data for historical reporting of profit and loss against strategies and securities
+1. Storage of market data for more advanced strategies that can be operated independently of Trading View
+1. An app that allows users to register, browse strategy performance, and connect their portfolios to the strategies
+1. A marketplace for acquiring and renting strategies (%/$ on profits/month/trade)
+1. Public/Private user profiles, automated trade performance, and portfolio size
+
+Difficulties with this vision are:
+
+1. Trading View offers no API for
+    1. injecting strategies against securities
+    1. injecting alerts on those strategies
+1. In order for Trading View to successfully send an alert, it requires a perfect balance of:
+    1. Correct strategy and study setup, including correct input options
+    1. Correct chart and change duration setup
+    1. Correct connection between the strategy and the chart for correct alert setup
+    1. Ensuring that none of this automation configuration changes in the process of just using trading view for everyday things
+    1. A Premium Trading View plan in order to get access to their Server-Side SMS Alert feature, the only alert feature that sends alerts even when you have Trading View closed
+1. Trading View has a few unexpected features/bugs:
+    1. Backtesting on Renko charts places realtime virtual trades at non-realtime prices, producing falsely optimal results
+    1. `valuewhen(change(series), series, ForLoopIteration)` does not seem to work as expected when inside a for loop, it seems to always produce the same result
+    1. There is no logging or debugging in pine script, which makes figuring out the unexpected implausible
+
+This would be assisted by either:
+
+1. Moving away from Trading View
+    1. This may happen in 2018, as currently other backtesting solutions seem of alpha quality
+    1. This would also allow potentially more advanced trading strategies, such as AI based ones
+1. Working with Trading View to solve the earlier issues
+1. A combination of both of the above; where this service evolves into an automated trading empire, where the strategies is a seperate empire which connects to this one, allowing any strategy service to connect to this user-facing (automated) trade placement solution
 
 
 ## Functions Setup
