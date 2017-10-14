@@ -1,5 +1,10 @@
 # Trading View Strategies
 
+Naming convention are female names iterating through letters of the english alphabet. Once Z is done, restart at A.
+
+This naming convention was done to promote short unique and memorable names, which are described by their accompanying text. As descriptions masquarding as names, are not memorable, short, unique, nor effective.
+
+
 ## Alice
 
 Prescription:
