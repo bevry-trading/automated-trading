@@ -19,23 +19,15 @@ ShortEnter = Valid and falling(close, ShortEnterAfter)
 ShortExit = Valid and rising(close, ShortExitAfter)
 
 // ====================================
-// STRATEGY
+// STUDY
 
-TradeSinceYear = input(title="trade since year", type=integer, defval=2017)
-TradeSinceMonth = input(title="trade since month", type=integer, defval=1)
+alertcondition(LongEnter, "buy")
+alertcondition(LongExit, "sell")
+alertcondition(ShortEnter, "short-enter")
+alertcondition(ShortExit, "short-exit")
 
-if year > TradeSinceYear or (year == TradeSinceYear and month >= TradeSinceMonth)
-    strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
-    strategy.close("long", when = LongExit)
+LongEnterExit = LongEnter ? 1 : (LongExit ? -1 : 0)
+plotarrow(LongEnterExit, title='longenterexit')
 
-    strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
-    strategy.close("short", when = ShortExit)
-
-// closeAll = strategy.netprofit < 0
-// strategy.close_all(closeAll)
-
-// openprofitColor = strategy.openprofit < 0 ? red : green
-// plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
-
-// netprofitColor = strategy.netprofit < 0 ? yellow : blue
-// plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
+ShortEnterExit = ShortEnter ? 1 : (ShortExit ? -1 : 0)
+plotarrow(ShortEnterExit, title='shortenterexit')

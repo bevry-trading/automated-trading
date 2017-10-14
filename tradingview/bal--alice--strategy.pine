@@ -21,18 +21,21 @@ ShortExit = Valid and rising(close, ShortExitAfter)
 // ====================================
 // STRATEGY
 
-strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
-strategy.close("long", when = LongExit)
+TradeSinceYear = input(title="trade since year", type=integer, defval=2017)
+TradeSinceMonth = input(title="trade since month", type=integer, defval=1)
 
-strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
-strategy.close("short", when = ShortExit)
+if year > TradeSinceYear or (year == TradeSinceYear and month >= TradeSinceMonth)
+    strategy.entry("long", strategy.long, when = LongEnter, qty = 100)
+    strategy.close("long", when = LongExit)
+
+    strategy.entry("short", strategy.short, when = ShortEnter, qty = 100)
+    strategy.close("short", when = ShortExit)
 
 // closeAll = strategy.netprofit < 0
 // strategy.close_all(closeAll)
 
-openprofitColor = strategy.openprofit < 0 ? red : green
+// openprofitColor = strategy.openprofit < 0 ? red : green
 // plot(strategy.openprofit, title = "openprofit", color = openprofitColor)
 
-netprofitColor = strategy.netprofit < 0 ? yellow : blue
+// netprofitColor = strategy.netprofit < 0 ? yellow : blue
 // plot(strategy.netprofit, title = "netprofit", color = netprofitColor)
-
