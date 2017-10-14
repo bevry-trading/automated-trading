@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is the automated trading setup used by [Benjamin Lupton](https://balupton.com), which already accomplishes:
+This project is the automated trading setup used by [Benjamin Lupton](https://balupton.com), codenames `baltrade`, which already accomplishes:
 
 1. [Trading View](http://balupton.com/tradingview) strategies are saved into the [`tradingview` directory](https://github.com/balupton/automated-trading/tree/master/tradingview)
 1. Trading View strategies are added to the the Trading View interface, to see how they perform via Trading View's backtesting feature
