@@ -71,6 +71,8 @@ I am not sure open-sourcing of this is a good or bad idea, as it could be I am n
     1. some assumptions or code in this project could be fatally flawed, and someone else can spot it before it becomes more of a liability
     1. the progress of strategies and implementation can be shared with support groups and other interested parties, to faciliate improvements and collaboration
 
+[Resources.](https://docs.google.com/spreadsheets/d/1m9E0SSG0nnjP1hOfC2i5TJiduCMGinJ6_EcaFyz_3NA/)
+
 
 ## Installation
 
