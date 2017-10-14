@@ -43,6 +43,31 @@ This would be assisted by either:
 1. Working with Trading View to solve the earlier issues
 1. A combination of both of the above; where this service evolves into an automated trading empire, where the strategies is a seperate empire which connects to this one, allowing any strategy service to connect to this user-facing (automated) trade placement solution
 
+How to help:
+
+1. Trading View Strategies
+    1. You can help me improve my current strategies
+    1. You can write new strategies and add them
+2. User-facing App
+    1. We can work together on the user facing app, that will allow users to register, add their exchanges, and view performance
+3. Review
+    1. You can review what has been done and help me improve it, especially from a security perspective
+4. Investment
+    1. You can help me connect a team/location/mentors and funds to build this out, make it into a product and a business, and hopefully double every user's money while they sleep
+
+I am not sure open-sourcing of this is a good or bad idea, as it could be I am naive, so here are my thoughts:
+
+1. Bad idea:
+    1. someone more familiar with big finance takes an optimal strategy stored here, and sells it to big finance making millions of dollars without me, ruining my return on investment
+    1. some assumptions or code in this project are fatally flawed, and someone decides to exploit it
+1. Neutral idea:
+    1. a larger team takes the ambitions here, and makes the project happen without me — neutral return on investment, as I will still benefit from their result, even if my own investment was at a loss
+    1. individuals and firms may not trust the project with their money, unless they too can inspect its operations, which open-source provides - however, they could just fork it, and setup their own product based off it, using their big brand name as leverage
+1. Good idea:
+    1. someone more familiar with big finance notices the potential in the project, and reaches out to help make it happen, offering their expertise
+    1. others also interested in this area help flesh this out, where ones expertise in one area compliments ones naiveity in another
+    1. some assumptions or code in this project are fatally flawed, and someone else can spot it before it becomes more of a liability
+
 
 ## Functions Setup
 
