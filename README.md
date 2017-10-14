@@ -57,7 +57,7 @@ How to help:
 3. Review
     1. You can review what has been done and help me improve it, especially from a security perspective
 4. Investment
-    1. You can help me connect a team/location/mentors and funds to build this out, make it into a product and a business, and hopefully double every user's money while they sleep
+    1. You can help me connect a team/location/mentors/funds to build this out, make it into a product and a business, and hopefully double every user's money while they sleep
 
 I am not sure open-sourcing of this is a good or bad idea, as it could be I am naive, so here are my thoughts:
 
