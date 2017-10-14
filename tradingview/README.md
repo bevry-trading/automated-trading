@@ -7,6 +7,11 @@ This naming convention was done to promote short unique and memorable names, whi
 
 ## Alice
 
+Preview:
+
+- [Strategy](https://www.tradingview.com/script/io4a1E6r-bal-alice-strategy/)
+- [Study](https://www.tradingview.com/script/fI0Pd71c-bal-alice-study/)
+
 Prescription:
 
 - Chart Type: Renko
