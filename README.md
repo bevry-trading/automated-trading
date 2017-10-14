@@ -47,10 +47,12 @@ This would be assisted by either:
 
 How to help:
 
-1. Trading View Strategies
+1. Trading View strategies
     1. You can help me improve my current strategies
     1. You can write new strategies and add them
-2. User-facing App
+1. More exchanges
+    1. Feel free to add support for more exchanges, I will happily merge them
+2. User-facing app
     1. We can work together on the user facing app, that will allow users to register, add their exchanges, and view performance
 3. Review
     1. You can review what has been done and help me improve it, especially from a security perspective
