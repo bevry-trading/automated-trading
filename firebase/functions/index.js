@@ -15,6 +15,8 @@ const { log, NError, sendError, getService, getServices, createUser } = require(
 const bitfinex = require('./bitfinex')
 const itbit = require('./itbit')
 const drivewealth = require('./drivewealth')
+const cryptomarketcap = require('./cryptomarketcap')
+
 
 // ====================================
 // Helpers
@@ -106,6 +108,16 @@ exports.createUser = functions.https.onRequest(function (request, response) {
 
 exports.parse = functions.https.onRequest(function (request, response) {
 	return parse(request.query, request.body)
+		.then((result) => response.send({ result }))
+		.catch(sendError(response, 'not ok'))
+})
+
+
+// ------------------------------------
+// Routes: CryptoMarketCap
+
+exports.cryptomarketcap_fetch = functions.https.onRequest(function (request, response) {
+	return cryptomarketcap.fetch(store)
 		.then((result) => response.send({ result }))
 		.catch(sendError(response, 'not ok'))
 })
