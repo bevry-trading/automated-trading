@@ -2,16 +2,23 @@
 
 ## Functions Setup
 
-### Setup Firebase
+### Firebase
 
-Get going with Firebase:
-https://firebase.google.com/docs/functions/get-started
+Signup for [Firebase](https://firebase.google.com)
 
-### Clone & Deploy
+### Clone
 
 ``` bash
 git clone https://github.com/balupton/automated-trading.git
 cd automated-trading
+```
+
+### Setup
+
+``` bash
+nvm use
+npm run login
+npm run setup
 npm run deploy
 ```
 

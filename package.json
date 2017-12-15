@@ -4,13 +4,17 @@
   "author": "Benjamin Lupton <b@lupton.cc>",
   "license": "MIT",
   "engines": {
-    "node": "8"
+    "node": "6"
   },
   "dependencies": {},
   "devDependencies": {
-    "eslint": "^4.8.0"
+    "eslint": "^4.8.0",
+    "firebase-tools": "^3.16.0"
   },
   "scripts": {
-    "deploy": "cd ./firebase && firebase deploy --only functions && cd ../"
+    "login": "firebase login",
+    "clean": "rm -Rf node_modules package-lock.json cd ./firebase/functions && rm -Rf node_modules package-lock.json && cd ../..",
+    "setup": "npm run clean && npm install && cd ./firebase/functions && npm install && cd ../..",
+    "deploy": "cd ./firebase/ && firebase deploy --only functions && cd ../"
   }
 }
