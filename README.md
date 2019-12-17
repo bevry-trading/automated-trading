@@ -1,3 +1,7 @@
+Update 2018: This project has been put on hold until Trading View released web hook support, as the SMS notifications expire, which can cause you to lose money as trades cease if you forget to renew the SMS hooks.
+
+Update 2019: Trading View has now released web hook support. [An issue has been created for renewing this project accordingly.](https://github.com/bevry-trading/automated-trading/issues/8)
+
 # Automated Trading
 
 ## Overview
