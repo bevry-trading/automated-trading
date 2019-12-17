@@ -2,6 +2,8 @@ Update 2018: This project has been put on hold until Trading View released web h
 
 Update 2019: [Trading View has now released web hook support.](https://www.tradingview.com/blog/en/webhooks-for-alerts-now-available-14054/) [An issue has been created for renewing this project accordingly.](https://github.com/bevry-trading/automated-trading/issues/8)
 
+[In the meantime consider using Crypto-ML instead.](https://balupton.com/cryptoml)
+
 # Automated Trading
 
 ## Overview
